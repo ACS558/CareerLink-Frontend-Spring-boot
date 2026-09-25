@@ -11,7 +11,8 @@ const PlacedStudentGuidance = ({ daysLeft, student }) => {
         ? [
             {
               company: student.placedCompany,
-              package: student.package,
+              //package: student.package,
+              package: student.placedPackage,
               status: "accepted",
               isPrimary: true,
             },
@@ -159,9 +160,11 @@ const PlacedStudentGuidance = ({ daysLeft, student }) => {
                     {placement.status && (
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          placement.status === "accepted"
+                          //placement.status === "accepted"
+                          placement.status?.toLowerCase() === "accepted"
                             ? "bg-green-500/30 text-green-100"
-                            : placement.status === "declined"
+                            //: placement.status === "declined"
+                            : placement.status?.toLowerCase() === "declined"
                               ? "bg-red-500/30 text-red-100"
                               : "bg-yellow-500/30 text-yellow-100"
                         }`}
@@ -217,7 +220,7 @@ const PlacedStudentGuidance = ({ daysLeft, student }) => {
                         </div>
                       </div>
                       <div className="text-2xl font-bold">
-                        ₹{placement.package} LPA
+                        ₹{placement.packageOffered || placement.package} LPA
                       </div>
                     </div>
 

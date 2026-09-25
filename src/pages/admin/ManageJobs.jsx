@@ -23,7 +23,8 @@ const ManageJobs = () => {
       if (search) params.search = search;
       if (status) params.approvalStatus = status;
       const res = await adminAPI.getAllJobs(params);
-      setJobs(res.data.jobs);
+      //setJobs(res.data.jobs);
+      setJobs(res.data.data);
     } catch (error) {
       console.error("Fetch jobs error:", error);
     } finally {
@@ -32,10 +33,16 @@ const ManageJobs = () => {
   };
 
   // ✅ ADD THIS FUNCTION
-  const handleJobClick = (job) => {
-    // Only allow clicking on approved jobs
-    if (job.approvalStatus === "approved") {
-      navigate(`/admin/jobs/${job._id}`);
+  // const handleJobClick = (job) => {
+  //   // Only allow clicking on approved jobs
+  //   if (job.approvalStatus === "approved") {
+  //     navigate(`/admin/jobs/${job._id}`);
+  //   }
+  // };
+
+   const handleJobClick = (job) => {
+    if (job.approvalStatus?.toLowerCase() === "approved") { 
+      navigate(`/admin/jobs/${job.id}`); 
     }
   };
 
@@ -131,75 +138,113 @@ const ManageJobs = () => {
                       </td>
                     </tr>
                   ) : (
-                    jobs.map((job, index) => (
+                    // jobs.map((job, index) => (
+                    //   <tr
+                    //     key={job._id}
+                    //     onClick={() => handleJobClick(job)} // ✅ ADD THIS
+                    //     className={`hover:bg-gray-50 transition ${
+                    //       // ✅ UPDATE THIS
+                    //       job.approvalStatus === "approved"
+                    //         ? "cursor-pointer hover:bg-blue-50"
+                    //         : "cursor-not-allowed opacity-60"
+                    //     }`}
+                    //   >
+                    //     <td className="px-6 py-4 text-sm text-gray-500">
+                    //       {index + 1}
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <div className="flex items-center space-x-2">
+                    //         {" "}
+                    //         {/* ✅ ADD THIS */}
+                    //         <div>
+                    //           <p className="text-sm font-semibold text-gray-900">
+                    //             {job.title}
+                    //           </p>
+                    //           <p className="text-xs text-gray-500">
+                    //             {job.jobType} • {job.workMode}
+                    //           </p>
+                    //         </div>
+                    //         {/* ✅ ADD CLICK INDICATOR FOR APPROVED JOBS */}
+                    //         {job.approvalStatus === "approved" && (
+                    //           <svg
+                    //             className="w-4 h-4 text-blue-600"
+                    //             fill="none"
+                    //             stroke="currentColor"
+                    //             viewBox="0 0 24 24"
+                    //           >
+                    //             <path
+                    //               strokeLinecap="round"
+                    //               strokeLinejoin="round"
+                    //               strokeWidth={2}
+                    //               d="M9 5l7 7-7 7"
+                    //             />
+                    //           </svg>
+                    //         )}
+                    //       </div>
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <p className="text-sm font-medium text-gray-700">
+                    //         {job.recruiterId?.companyInfo?.companyName}
+                    //       </p>
+                    //       <p className="text-xs text-gray-400">
+                    //         {job.recruiterId?.userId?.email}
+                    //       </p>
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-700">
+                    //       {job.location}
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-700">
+                    //       {job.jobType}
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <span
+                    //         className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(job.approvalStatus)}`}
+                    //       >
+                    //         {job.approvalStatus.charAt(0).toUpperCase() +
+                    //           job.approvalStatus.slice(1)}
+                    //       </span>
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-500">
+                    //       {formatDate(job.createdAt)}
+                    //     </td>
+                    //   </tr>
+                    // ))
+                                        jobs.map((job, index) => (
                       <tr
-                        key={job._id}
-                        onClick={() => handleJobClick(job)} // ✅ ADD THIS
+                        key={job.id} // was job._id
+                        onClick={() => handleJobClick(job)}
                         className={`hover:bg-gray-50 transition ${
-                          // ✅ UPDATE THIS
-                          job.approvalStatus === "approved"
+                          job.approvalStatus?.toLowerCase() === "approved" 
                             ? "cursor-pointer hover:bg-blue-50"
                             : "cursor-not-allowed opacity-60"
                         }`}
                       >
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {index + 1}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{index + 1}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-2">
-                            {" "}
-                            {/* ✅ ADD THIS */}
                             <div>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {job.title}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {job.jobType} • {job.workMode}
-                              </p>
+                              <p className="text-sm font-semibold text-gray-900">{job.title}</p>
+                              <p className="text-xs text-gray-500">{job.jobType} • {job.workMode}</p>
                             </div>
-                            {/* ✅ ADD CLICK INDICATOR FOR APPROVED JOBS */}
-                            {job.approvalStatus === "approved" && (
-                              <svg
-                                className="w-4 h-4 text-blue-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 5l7 7-7 7"
-                                />
+                            {job.approvalStatus?.toLowerCase() === "approved" && ( 
+                              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                               </svg>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-700">
-                            {job.recruiterId?.companyInfo?.companyName}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {job.recruiterId?.userId?.email}
-                          </p>
+                          <p className="text-sm font-medium text-gray-700">{job.companyName}</p>
+                          <p className="text-xs text-gray-400">{job.recruiterEmail}</p>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {job.location}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {job.jobType}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{job.location}</td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{job.jobType}</td>
                         <td className="px-6 py-4">
-                          <span
-                            className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(job.approvalStatus)}`}
-                          >
-                            {job.approvalStatus.charAt(0).toUpperCase() +
-                              job.approvalStatus.slice(1)}
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(job.approvalStatus)}`}>
+                            {job.approvalStatus.charAt(0).toUpperCase() + job.approvalStatus.slice(1).toLowerCase()}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {formatDate(job.createdAt)}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{formatDate(job.createdAt)}</td>
                       </tr>
                     ))
                   )}
@@ -209,7 +254,8 @@ const ManageJobs = () => {
           </div>
 
           {/* ✅ ADD HELPER TEXT */}
-          {jobs.some((job) => job.approvalStatus === "approved") && (
+          {/* {jobs.some((job) => job.approvalStatus === "approved") && ( */}
+          {jobs.some((job) => job.approvalStatus?.toLowerCase() === "approved") && ( 
             <div className="mt-4 text-sm text-gray-600">
               💡 Click on any{" "}
               <span className="font-semibold text-blue-600">approved</span> job

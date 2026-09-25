@@ -68,7 +68,7 @@ const PostJob = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  /* const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -96,6 +96,50 @@ const PostJob = () => {
           .filter(Boolean),
         numberOfOpenings: Number(formData.numberOfOpenings),
         applicationDeadline: formData.applicationDeadline || undefined,
+      };
+
+      await jobAPI.createJob(jobData);
+      toast.success("Job posted successfully! Awaiting admin approval.");
+      navigate("/recruiter/jobs");
+    } catch (error) {
+      console.error("Post job error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }; */
+
+    const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const jobTypeMap = {
+      "Full-time": "FULL_TIME",
+      "Part-time": "PART_TIME",
+      "Internship": "INTERNSHIP",
+      "Contract": "CONTRACT",
+    };
+    const workModeMap = { "On-site": "ON_SITE", "Remote": "REMOTE", "Hybrid": "HYBRID" };
+    const salaryTypeMap = { "LPA": "LPA", "Monthly": "MONTHLY", "Hourly": "HOURLY" };
+
+    try {
+      const jobData = {
+        title: formData.title,
+        description: formData.description,
+        jobType: jobTypeMap[formData.jobType] || "FULL_TIME",
+        location: formData.location,
+        workMode: workModeMap[formData.workMode] || "ON_SITE",
+        salaryMin: formData.salaryMin ? Number(formData.salaryMin) : null,
+        salaryMax: formData.salaryMax ? Number(formData.salaryMax) : null,
+        salaryType: salaryTypeMap[formData.salaryType] || "LPA",
+        eligibleBranches: formData.branches,
+        minCgpa: formData.minCGPA ? Number(formData.minCGPA) : null,
+        maxBacklogs: Number(formData.maxBacklogs),
+        graduationYears: formData.graduationYears,
+        skillsRequired: formData.skillsRequired.split(",").map((s) => s.trim()).filter(Boolean),
+        numberOfOpenings: Number(formData.numberOfOpenings),
+        applicationDeadline: formData.applicationDeadline
+          ? `${formData.applicationDeadline}T23:59:59`
+          : null,
       };
 
       await jobAPI.createJob(jobData);

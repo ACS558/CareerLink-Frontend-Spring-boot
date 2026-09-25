@@ -19,7 +19,8 @@ const PendingRecruiters = () => {
   const fetchPendingRecruiters = async () => {
     try {
       const res = await adminAPI.getPendingRecruiters();
-      setRecruiters(res.data.recruiters);
+      //setRecruiters(res.data.recruiters);
+      setRecruiters(res.data.data);
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -35,7 +36,7 @@ const PendingRecruiters = () => {
         verificationNotes: "Approved by admin",
       });
       toast.success(`${companyName} has been approved!`);
-      setRecruiters(recruiters.filter((r) => r._id !== id));
+      setRecruiters(recruiters.filter((r) => r.id !== id)); // was r._id
     } catch (error) {
       console.error("Approve error:", error);
     } finally {
@@ -50,14 +51,9 @@ const PendingRecruiters = () => {
     }
     setActionLoading(true);
     try {
-      await adminAPI.verifyRecruiter(selectedRecruiter._id, {
-        action: "reject",
-        rejectionReason: rejectReason,
-      });
-      toast.success(
-        `${selectedRecruiter.companyInfo.companyName} has been rejected.`,
-      );
-      setRecruiters(recruiters.filter((r) => r._id !== selectedRecruiter._id));
+       await adminAPI.verifyRecruiter(selectedRecruiter.id, { action: "reject", rejectionReason: rejectReason }); // was selectedRecruiter._id
+      toast.success(`${selectedRecruiter.companyName} has been rejected.`); // was companyInfo.companyName
+            setRecruiters(recruiters.filter((r) => r.id !== selectedRecruiter.id)); // was r._id / selectedRecruiter._id
       setShowRejectModal(false);
       setRejectReason("");
       setSelectedRecruiter(null);
@@ -111,26 +107,16 @@ const PendingRecruiters = () => {
           ) : (
             <div className="space-y-4">
               {recruiters.map((recruiter) => (
-                <div
-                  key={recruiter._id}
-                  className="bg-white rounded-lg shadow-md p-6"
-                >
+                <div key={recruiter.id} className="bg-white rounded-lg shadow-md p-6"> {/* was recruiter._id */}
                   <div className="flex items-start justify-between">
                     {/* Company Info */}
                     <div className="flex items-start space-x-4">
                       <div className="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center">
-                        <span className="text-2xl font-bold text-green-600">
-                          {recruiter.companyInfo.companyName[0]}
-                        </span>
+                        <span className="text-2xl font-bold text-green-600">{recruiter.companyName?.[0]}</span> {/* was companyInfo.companyName[0] */}
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">
-                          {recruiter.companyInfo.companyName}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {recruiter.companyInfo.industry} •{" "}
-                          {recruiter.companyInfo.location}
-                        </p>
+                         <h3 className="text-lg font-bold text-gray-900">{recruiter.companyName}</h3> {/* was companyInfo.companyName */}
+                        <p className="text-sm text-gray-500">{recruiter.industry} • {recruiter.location}</p> {/* was companyInfo.industry/.location */}
                         <p className="text-xs text-gray-400 mt-1">
                           Registered:{" "}
                           {new Date(recruiter.createdAt).toLocaleDateString()}
@@ -139,16 +125,7 @@ const PendingRecruiters = () => {
                     </div>
                     {/* Action Buttons */}
                     <div className="flex space-x-3">
-                      <button
-                        onClick={() =>
-                          approveRecruiter(
-                            recruiter._id,
-                            recruiter.companyInfo.companyName,
-                          )
-                        }
-                        disabled={actionLoading}
-                        className="btn-success px-5 py-2 text-sm"
-                      >
+                      <button onClick={() => approveRecruiter(recruiter.id, recruiter.companyName)} disabled={actionLoading} className="btn-success px-5 py-2 text-sm"> {/* was recruiter._id, companyInfo.companyName */}
                         ✅ Approve
                       </button>
                       <button
@@ -168,13 +145,11 @@ const PendingRecruiters = () => {
                   <div className="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                       <p className="text-xs text-gray-400">Size</p>
-                      <p className="text-sm font-medium text-gray-700">
-                        {recruiter.companyInfo.companySize || "—"}
-                      </p>
+                       <p className="text-sm font-medium text-gray-700">{recruiter.companySize || "—"}</p> {/* was companyInfo.companySize */}
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">Website</p>
-                      {recruiter.companyInfo.website ? (
+                      {/* {recruiter.companyInfo.website ? (
                         <a
                           href={recruiter.companyInfo.website}
                           target="_blank"
@@ -185,29 +160,30 @@ const PendingRecruiters = () => {
                         </a>
                       ) : (
                         <p className="text-sm text-gray-500">—</p>
+                      )} */}
+                      {recruiter.website ? ( // was companyInfo.website
+                        <a href={recruiter.website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary-600 hover:underline">
+                          {recruiter.website}
+                        </a>
+                      ) : (
+                        <p className="text-sm text-gray-500">—</p>
                       )}
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">Contact</p>
-                      <p className="text-sm font-medium text-gray-700">
-                        {recruiter.contactPerson.name}
-                      </p>
+                       <p className="text-sm font-medium text-gray-700">{recruiter.contactName}</p> {/* was contactPerson.name */}
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">Email</p>
-                      <p className="text-sm font-medium text-gray-700">
-                        {recruiter.userId.email}
-                      </p>
+                     <p className="text-sm font-medium text-gray-700">{recruiter.email}</p> {/* was userId.email */}
                     </div>
                   </div>
 
                   {/* Description */}
-                  {recruiter.companyInfo.description && (
+                   {recruiter.description && ( // was companyInfo.description
                     <div className="mt-3 pt-3 border-t">
                       <p className="text-xs text-gray-400">About Company</p>
-                      <p className="text-sm text-gray-600">
-                        {recruiter.companyInfo.description}
-                      </p>
+                      <p className="text-sm text-gray-600">{recruiter.description}</p> {/* was companyInfo.description */}
                     </div>
                   )}
                 </div>
@@ -225,7 +201,7 @@ const PendingRecruiters = () => {
                 <p className="text-sm text-gray-500 mb-4">
                   Rejecting:{" "}
                   <span className="font-semibold text-gray-700">
-                    {selectedRecruiter?.companyInfo?.companyName}
+                     {selectedRecruiter?.companyName} {/* was companyInfo?.companyName */}
                   </span>
                 </p>
                 <div>

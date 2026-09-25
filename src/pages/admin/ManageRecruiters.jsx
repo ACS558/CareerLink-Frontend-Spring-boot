@@ -21,7 +21,8 @@ const ManageRecruiters = () => {
       if (search) params.search = search;
       if (status) params.verificationStatus = status;
       const res = await adminAPI.getAllRecruiters(params);
-      setRecruiters(res.data.recruiters);
+      //setRecruiters(res.data.recruiters);
+      setRecruiters(res.data.data);
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -119,48 +120,73 @@ const ManageRecruiters = () => {
                       </td>
                     </tr>
                   ) : (
-                    recruiters.map((rec, index) => (
-                      <tr key={rec._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {index + 1}
-                        </td>
+                    // recruiters.map((rec, index) => (
+                    //   <tr key={rec._id} className="hover:bg-gray-50">
+                    //     <td className="px-6 py-4 text-sm text-gray-500">
+                    //       {index + 1}
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <div className="flex items-center space-x-3">
+                    //         <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    //           <span className="text-sm font-bold text-green-600">
+                    //             {rec.companyInfo.companyName[0]}
+                    //           </span>
+                    //         </div>
+                    //         <div>
+                    //           <p className="text-sm font-semibold text-gray-900">
+                    //             {rec.companyInfo.companyName}
+                    //           </p>
+                    //           <p className="text-xs text-gray-400">
+                    //             {rec.userId?.email}
+                    //           </p>
+                    //         </div>
+                    //       </div>
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-700">
+                    //       {rec.companyInfo.industry}
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-700">
+                    //       {rec.companyInfo.location}
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-700">
+                    //       {rec.contactPerson.name}
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <span
+                    //         className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(rec.verificationStatus)}`}
+                    //       >
+                    //         {rec.verificationStatus?.charAt(0).toUpperCase() +
+                    //           rec.verificationStatus?.slice(1)}
+                    //       </span>
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-500">
+                    //       {new Date(rec.createdAt).toLocaleDateString()}
+                    //     </td>
+                    //   </tr>
+                    // ))
+                                        recruiters.map((rec, index) => (
+                      <tr key={rec.id} className="hover:bg-gray-50"> {/* was rec._id */}
+                        <td className="px-6 py-4 text-sm text-gray-500">{index + 1}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                              <span className="text-sm font-bold text-green-600">
-                                {rec.companyInfo.companyName[0]}
-                              </span>
+                              <span className="text-sm font-bold text-green-600">{rec.companyName?.[0]}</span>
                             </div>
                             <div>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {rec.companyInfo.companyName}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {rec.userId?.email}
-                              </p>
+                              <p className="text-sm font-semibold text-gray-900">{rec.companyName}</p>
+                              <p className="text-xs text-gray-400">{rec.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {rec.companyInfo.industry}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {rec.companyInfo.location}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {rec.contactPerson.name}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{rec.industry}</td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{rec.location}</td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{rec.contactName}</td>
                         <td className="px-6 py-4">
-                          <span
-                            className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(rec.verificationStatus)}`}
-                          >
-                            {rec.verificationStatus?.charAt(0).toUpperCase() +
-                              rec.verificationStatus?.slice(1)}
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(rec.verificationStatus)}`}>
+                            {rec.verificationStatus?.charAt(0).toUpperCase() + rec.verificationStatus?.slice(1).toLowerCase()}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(rec.createdAt).toLocaleDateString()}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{new Date(rec.createdAt).toLocaleDateString()}</td>
                       </tr>
                     ))
                   )}

@@ -21,7 +21,8 @@ const PendingJobs = () => {
     setLoading(true);
     try {
       const res = await adminAPI.getPendingJobs();
-      setJobs(res.data.jobs);
+      //setJobs(res.data.jobs);
+      setJobs(res.data.data);
     } catch (error) {
       console.error("Fetch pending jobs error:", error);
     } finally {
@@ -37,7 +38,7 @@ const PendingJobs = () => {
         approvalNotes: "Approved by admin",
       });
       toast.success(`"${title}" has been approved!`);
-      setJobs(jobs.filter((j) => j._id !== id));
+       setJobs(jobs.filter((j) => j.id !== id)); // was j._id
     } catch (error) {
       console.error("Approve error:", error);
     } finally {
@@ -52,12 +53,9 @@ const PendingJobs = () => {
     }
     setActionLoading(true);
     try {
-      await adminAPI.verifyJob(selectedJob._id, {
-        action: "reject",
-        rejectionReason,
-      });
+       await adminAPI.verifyJob(selectedJob.id, { action: "reject", rejectionReason }); // was selectedJob._id
       toast.success(`"${selectedJob.title}" has been rejected.`);
-      setJobs(jobs.filter((j) => j._id !== selectedJob._id));
+     setJobs(jobs.filter((j) => j.id !== selectedJob.id)); // was j._id / selectedJob._id
       setShowRejectModal(false);
       setRejectionReason("");
       setSelectedJob(null);
@@ -111,36 +109,27 @@ const PendingJobs = () => {
           ) : (
             <div className="space-y-4">
               {jobs.map((job) => (
-                <div
-                  key={job._id}
-                  className="bg-white rounded-lg shadow-md p-6"
-                >
+                <div key={job.id} className="bg-white rounded-lg shadow-md p-6"> {/* was job._id */}
                   <div className="flex items-start justify-between">
                     {/* Job Info */}
                     <div className="flex-1">
                       <div className="flex items-start space-x-4 mb-4">
                         <div className="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                           <span className="text-2xl font-bold text-green-600">
-                            {job.recruiterId?.companyInfo?.companyName?.[0] ||
-                              "C"}
+                            {job.companyName?.[0] || "C"} {/* was recruiterId?.companyInfo?.companyName?.[0] */}
                           </span>
                         </div>
                         <div className="flex-1">
                           <h3 className="text-xl font-bold text-gray-900 mb-1">
                             {job.title}
                           </h3>
-                          <p className="text-gray-600 font-medium mb-2">
-                            {job.recruiterId?.companyInfo?.companyName}
-                          </p>
+                          <p className="text-gray-600 font-medium mb-2">{job.companyName}</p> {/* was recruiterId?.companyInfo?.companyName */}
                           <div className="flex flex-wrap gap-3 text-sm text-gray-600">
                             <span>📍 {job.location}</span>
                             <span>💼 {job.jobType}</span>
                             <span>🏢 {job.workMode}</span>
-                            {job.salaryRange?.min && (
-                              <span>
-                                💰 {job.salaryRange.min}-{job.salaryRange.max}{" "}
-                                {job.salaryType}
-                              </span>
+                            {job.salaryMin && ( // was job.salaryRange?.min
+                               <span>💰 {job.salaryMin}-{job.salaryMax} {job.salaryType}</span> // was salaryRange.min/.max
                             )}
                             <span>📅 {job.numberOfOpenings} opening(s)</span>
                           </div>
@@ -158,9 +147,7 @@ const PendingJobs = () => {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
                         <div>
                           <p className="text-xs text-gray-400">Company Email</p>
-                          <p className="text-sm font-medium text-gray-700">
-                            {job.recruiterId?.userId?.email}
-                          </p>
+                          <p className="text-sm font-medium text-gray-700">{job.recruiterEmail}</p> {/* was recruiterId?.userId?.email */}
                         </div>
                         <div>
                           <p className="text-xs text-gray-400">Posted Date</p>
@@ -176,28 +163,27 @@ const PendingJobs = () => {
                             </p>
                           </div>
                         )}
-                        {job.eligibilityCriteria?.minCGPA && (
+                       {job.minCgpa && ( // was eligibilityCriteria?.minCGPA
                           <div>
                             <p className="text-xs text-gray-400">Min CGPA</p>
                             <p className="text-sm font-medium text-gray-700">
-                              {job.eligibilityCriteria.minCGPA}
+                              {/* {job.eligibilityCriteria.minCGPA} */}
+                              {job.minCgpa}
                             </p>
                           </div>
                         )}
                       </div>
 
                       {/* Eligibility Criteria */}
-                      {(job.eligibilityCriteria?.branches?.length > 0 ||
-                        job.skillsRequired?.length > 0) && (
+                     {(job.eligibleBranches?.length > 0 || job.skillsRequired?.length > 0) && ( // was eligibilityCriteria?.branches
                         <div className="mt-4 pt-4 border-t">
-                          {job.eligibilityCriteria?.branches?.length > 0 && (
+                         {job.eligibleBranches?.length > 0 && ( // was eligibilityCriteria?.branches
                             <div className="mb-2">
                               <p className="text-xs text-gray-400 mb-1">
                                 Eligible Branches
                               </p>
                               <div className="flex flex-wrap gap-2">
-                                {job.eligibilityCriteria.branches.map(
-                                  (branch, i) => (
+                               {job.eligibleBranches.map((branch, i) => ( // was eligibilityCriteria.branches
                                     <span
                                       key={i}
                                       className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
@@ -233,10 +219,10 @@ const PendingJobs = () => {
                     {/* Action Buttons */}
                     <div className="flex flex-col space-y-2 ml-6">
                       <button
-                        onClick={() => approveJob(job._id, job.title)}
+                        onClick={() => approveJob(job.id, job.title)} 
                         disabled={actionLoading}
                         className="btn-success px-6 py-2 text-sm whitespace-nowrap"
-                      >
+                      >  {/* was job._id */}
                         ✅ Approve
                       </button>
                       <button

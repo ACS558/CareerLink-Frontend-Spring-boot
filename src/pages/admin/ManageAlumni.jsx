@@ -23,7 +23,8 @@ const ManageAlumni = () => {
       if (status) params.verificationStatus = status;
       if (branch) params.branch = branch;
       const res = await adminAPI.getAllAlumni(params);
-      setAlumni(res.data.alumni);
+      //setAlumni(res.data.alumni);
+      setAlumni(res.data.data );
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -133,7 +134,7 @@ const ManageAlumni = () => {
                     </tr>
                   ) : (
                     alumni.map((al, index) => (
-                      <tr key={al._id} className="hover:bg-gray-50">
+                      <tr key={al.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 text-sm text-gray-500">
                           {index + 1}
                         </td>
@@ -146,37 +147,47 @@ const ManageAlumni = () => {
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                               <span className="text-sm font-bold text-purple-600">
-                                {al.personalInfo?.firstName?.[0]}
+                                {/* {al.personalInfo?.firstName?.[0]} */}
+                                {al.firstName?.[0]}
                               </span>
                             </div>
                             <div>
                               <p className="text-sm font-semibold text-gray-900">
-                                {al.personalInfo?.firstName}{" "}
-                                {al.personalInfo?.lastName}
+                                {/* {al.personalInfo?.firstName}{" "}
+                                {al.personalInfo?.lastName} */}
+                                {al.firstName} {al.lastName}
                               </p>
                               <p className="text-xs text-gray-400">
-                                {al.userId?.email}
+                                {/* {al.userId?.email} */}
+                                {al.email}
                               </p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700">
-                          {al.academicInfo?.branch || "—"}
+                          {/* {al.academicInfo?.branch || "—"} */}
+                          {al.branch || "—"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700">
-                          {al.academicInfo?.graduationYear || "—"}
+                          {/* {al.academicInfo?.graduationYear || "—"} */}
+                          {al.graduationYear || "—"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700">
-                          {al.currentRole?.company || "—"}
+                          {/* {al.currentRole?.company || "—"} */}
+                          {al.currentCompany || "—"}
                         </td>
                         <td className="px-6 py-4">
                           <span
                             className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(al.verificationStatus)}`}
                           >
-                            {al.verificationStatus === "verified"
+                            {/* {al.verificationStatus === "verified"
                               ? "Verified"
                               : al.verificationStatus?.charAt(0).toUpperCase() +
-                                al.verificationStatus?.slice(1)}
+                                al.verificationStatus?.slice(1)} */}
+
+                                {al.verificationStatus?.toLowerCase() === "approved"
+                              ? "Verified"
+                              : al.verificationStatus?.charAt(0).toUpperCase() + al.verificationStatus?.slice(1).toLowerCase()}
                           </span>
                         </td>
                       </tr>

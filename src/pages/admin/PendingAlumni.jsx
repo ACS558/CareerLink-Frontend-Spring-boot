@@ -19,7 +19,8 @@ const PendingAlumni = () => {
   const fetchPendingAlumni = async () => {
     try {
       const res = await adminAPI.getPendingAlumni();
-      setAlumni(res.data.alumni);
+      //setAlumni(res.data.alumni);
+      setAlumni(res.data.data);
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -35,7 +36,7 @@ const PendingAlumni = () => {
         verificationNotes: "Verified by admin",
       });
       toast.success(`${name} has been verified!`);
-      setAlumni(alumni.filter((a) => a._id !== id));
+      setAlumni(alumni.filter((a) => a.id !== id)); // was a._id
     } catch (error) {
       console.error("Approve error:", error);
     } finally {
@@ -50,13 +51,15 @@ const PendingAlumni = () => {
     }
     setActionLoading(true);
     try {
-      const name = `${selectedAlumnus.personalInfo.firstName} ${selectedAlumnus.personalInfo.lastName}`;
-      await adminAPI.verifyAlumni(selectedAlumnus._id, {
+      //const name = `${selectedAlumnus.personalInfo.firstName} ${selectedAlumnus.personalInfo.lastName}`;
+       const name = `${selectedAlumnus.firstName} ${selectedAlumnus.lastName}`; 
+      
+      await adminAPI.verifyAlumni(selectedAlumnus.id, { // was selectedAlumnus._id
         action: "reject",
         rejectionReason: rejectReason,
       });
       toast.success(`${name} has been rejected.`);
-      setAlumni(alumni.filter((a) => a._id !== selectedAlumnus._id));
+      setAlumni(alumni.filter((a) => a.id !== selectedAlumnus.id)); // was a._id / selectedAlumnus._id
       setShowRejectModal(false);
       setRejectReason("");
       setSelectedAlumnus(null);
@@ -107,10 +110,12 @@ const PendingAlumni = () => {
           ) : (
             <div className="space-y-4">
               {alumni.map((alumnus) => {
-                const fullName = `${alumnus.personalInfo.firstName} ${alumnus.personalInfo.lastName}`;
+                //const fullName = `${alumnus.personalInfo.firstName} ${alumnus.personalInfo.lastName}`;
+                const fullName = `${alumnus.firstName} ${alumnus.lastName}`; // was personalInfo.firstName/.lastName
+                
                 return (
                   <div
-                    key={alumnus._id}
+                    key={alumnus.id}
                     className="bg-white rounded-lg shadow-md p-6"
                   >
                     <div className="flex items-start justify-between">
@@ -118,17 +123,22 @@ const PendingAlumni = () => {
                       <div className="flex items-start space-x-4">
                         <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
                           <span className="text-2xl font-bold text-purple-600">
-                            {alumnus.personalInfo.firstName[0]}
+                            {/* {alumnus.personalInfo.firstName[0]} */}
+                            {alumnus.firstName?.[0]}
                           </span>
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-gray-900">
                             {fullName}
                           </h3>
-                          <p className="text-sm text-gray-500">
+                          {/* <p className="text-sm text-gray-500">
                             {alumnus.registrationNumber} •{" "}
                             {alumnus.academicInfo.branch} • Batch{" "}
                             {alumnus.academicInfo.graduationYear}
+                          </p> */}
+
+                          <p className="text-sm text-gray-500">
+                            {alumnus.registrationNumber} • {alumnus.branch} • Batch {alumnus.graduationYear}
                           </p>
                           <p className="text-xs text-gray-400 mt-1">
                             Registered:{" "}
@@ -139,7 +149,7 @@ const PendingAlumni = () => {
                       {/* Action Buttons */}
                       <div className="flex space-x-3">
                         <button
-                          onClick={() => approveAlumnus(alumnus._id, fullName)}
+                          onClick={() => approveAlumnus(alumnus.id, fullName)}
                           disabled={actionLoading}
                           className="btn-success px-5 py-2 text-sm"
                         >
@@ -169,47 +179,53 @@ const PendingAlumni = () => {
                       <div>
                         <p className="text-xs text-gray-400">Branch</p>
                         <p className="text-sm font-medium text-gray-700">
-                          {alumnus.academicInfo.branch}
+                          {/* {alumnus.academicInfo.branch} */}
+                          {alumnus.branch}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-400">Graduation Year</p>
                         <p className="text-sm font-medium text-gray-700">
-                          {alumnus.academicInfo.graduationYear}
+                          {/* {alumnus.academicInfo.graduationYear} */}
+                          {alumnus.graduationYear}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-400">Email</p>
                         <p className="text-sm font-medium text-gray-700">
-                          {alumnus.userId.email}
+                          {/* {alumnus.userId.email} */}
+                          {alumnus.email}
                         </p>
                       </div>
                     </div>
 
                     {/* Current Role */}
-                    {alumnus.currentRole?.company && (
+                   {alumnus.currentCompany && ( // was alumnus.currentRole?.company
                       <div className="mt-3 pt-3 border-t flex space-x-6">
                         <div>
                           <p className="text-xs text-gray-400">
                             Current Company
                           </p>
                           <p className="text-sm font-medium text-gray-700">
-                            {alumnus.currentRole.company}
+                            {/* {alumnus.currentRole.company} */}
+                            {alumnus.currentCompany}
                           </p>
                         </div>
-                        {alumnus.currentRole.designation && (
+                        {alumnus.currentDesignation && ( // was alumnus.currentRole.designation
                           <div>
                             <p className="text-xs text-gray-400">Designation</p>
                             <p className="text-sm font-medium text-gray-700">
-                              {alumnus.currentRole.designation}
+                              {/* {alumnus.currentRole.designation} */}
+                              {alumnus.currentDesignation}
                             </p>
                           </div>
                         )}
-                        {alumnus.currentRole.experience ? (
+                         {alumnus.experience ? ( // was alumnus.currentRole.experience
                           <div>
                             <p className="text-xs text-gray-400">Experience</p>
                             <p className="text-sm font-medium text-gray-700">
-                              {alumnus.currentRole.experience} yrs
+                              {/* {alumnus.currentRole.experience} yrs */}
+                              {alumnus.experience} yrs
                             </p>
                           </div>
                         ) : null}
@@ -231,8 +247,8 @@ const PendingAlumni = () => {
                 <p className="text-sm text-gray-500 mb-4">
                   Rejecting:{" "}
                   <span className="font-semibold text-gray-700">
-                    {selectedAlumnus?.personalInfo?.firstName}{" "}
-                    {selectedAlumnus?.personalInfo?.lastName}
+                  {selectedAlumnus?.firstName} {selectedAlumnus?.lastName} {/* was personalInfo?.firstName/.lastName */}
+                  
                   </span>
                 </p>
                 <div>

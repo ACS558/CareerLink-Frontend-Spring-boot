@@ -16,8 +16,9 @@ const MyPlacements = () => {
     try {
       setLoading(true);
       const response = await studentAPI.getPlacements();
-      console.log("Placements response:", response.data); // ✅ DEBUG
-      setPlacements(response.data.placements || []);
+      console.log("Placements response:", response.data); 
+      //setPlacements(response.data.placements || []);
+      setPlacements(response.data.data || []);
     } catch (error) {
       console.error("Fetch placements error:", error);
       toast.error("Failed to load placements");
@@ -106,7 +107,8 @@ const MyPlacements = () => {
             <div className="grid gap-6">
               {placements.map((placement, index) => (
                 <div
-                  key={placement._id || index}
+                  //key={placement._id || index}
+                  key={placement.id || index}
                   className="bg-white rounded-xl shadow-sm p-6 border-2 border-gray-200 hover:shadow-md transition"
                 >
                   <div className="flex items-start justify-between">
@@ -121,7 +123,8 @@ const MyPlacements = () => {
                               {placement.company}
                             </h3>
                             {/* Show "From Application" badge */}
-                            {placement.metadata?.applicationId && (
+                            {/* {placement.metadata?.applicationId && ( */}
+                           { placement.relatedApplicationId && (
                               <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-semibold">
                                 From Application
                               </span>
@@ -140,7 +143,8 @@ const MyPlacements = () => {
                         <div>
                           <p className="text-sm text-gray-600 mb-1">Package</p>
                           <p className="text-2xl font-bold text-gray-900">
-                            ₹{placement.package} LPA
+                           // ₹{placement.package} LPA
+                            ₹{placement.packageOffered} LPA
                           </p>
                         </div>
                         <div>

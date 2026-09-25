@@ -12,7 +12,8 @@ const BrowseReferrals = () => {
   const fetchReferrals = async () => {
     try {
       const res = await studentAPI.getReferrals();
-      setReferrals(res.data.referrals);
+     // setReferrals(res.data.referrals);
+      setReferrals(res.data.data.content || res.data.data);
     } catch (error) {
       toast.error("Failed to load referrals");
     } finally {
@@ -49,7 +50,8 @@ const BrowseReferrals = () => {
             <div className="grid gap-4">
               {referrals.map((ref) => (
                 <div
-                  key={ref._id}
+                  //key={ref._id}
+                  key={ref.id}
                   className="bg-white shadow rounded-lg p-5 border"
                 >
                   <h2 className="text-lg font-semibold">

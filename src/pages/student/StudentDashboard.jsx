@@ -41,14 +41,18 @@ const StudentDashboard = () => {
 
       // Fetch dashboard mode info
       const dashboardResponse = await studentAPI.getDashboard();
-      setDashboardData(dashboardResponse.data);
-      setDashboardMode(dashboardResponse.data.dashboardMode);
+      // setDashboardData(dashboardResponse.data);
+      // setDashboardMode(dashboardResponse.data.dashboardMode);
+       const data = dashboardResponse.data.data;
+      setDashboardData(data);
+      setDashboardMode(data.dashboardMode);
 
       // Only fetch stats if in normal mode
       if (dashboardResponse.data.dashboardMode === "normal") {
         const statsResponse = await api.get("/analytics/student/dashboard");
         if (statsResponse.data.success) {
-          setStats(statsResponse.data.stats);
+          //setStats(statsResponse.data.stats);
+          setStats(statsResponse.data.data);
         }
       }
     } catch (error) {
@@ -95,7 +99,8 @@ const StudentDashboard = () => {
                 Career Guidance
               </h1>
 
-              {placementStatus === "placed" ? (
+              {/* {placementStatus === "placed" ? ( */}
+              {placementStatus?.toLowerCase() === "placed" ? (
                 <PlacedStudentGuidance
                   daysLeft={daysUntilExpiry}
                   student={student}
@@ -234,7 +239,8 @@ const StudentDashboard = () => {
                     Avg ATS Score
                   </p>
                   <p className="text-3xl font-bold text-orange-600 mt-2">
-                    {stats?.avgATSScore || 0}
+                   // {stats?.avgATSScore || 0}
+                    {stats?.avgAtsScore || 0} 
                   </p>
                 </div>
                 <div className="bg-orange-100 p-3 rounded-full">

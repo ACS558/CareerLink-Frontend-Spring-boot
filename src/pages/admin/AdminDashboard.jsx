@@ -33,7 +33,8 @@ const AdminDashboard = () => {
       setLoading(true);
       const response = await api.get("/analytics/admin/dashboard");
       if (response.data.success) {
-        setStats(response.data.stats);
+        setStats(response.data.data);
+        //setStats(response.data.stats);
       }
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -294,7 +295,8 @@ const AdminDashboard = () => {
                     <Legend />
                     <Line
                       type="monotone"
-                      dataKey="applications"
+                      dataKey="count"
+                     // dataKey="applications"
                       stroke="#7C3AED"
                       strokeWidth={2}
                       name="Applications"
@@ -320,20 +322,24 @@ const AdminDashboard = () => {
                   <PieChart>
                     <Pie
                       data={stats.charts.statusDistribution.filter(
-                        (s) => s.value > 0,
+                        //(s) => s.value > 0,
+                        (s) => s.count > 0,
                       )}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) =>
-                        `${name}: ${(percent * 100).toFixed(0)}%`
-                      }
+                      // label={({ name, percent }) =>
+                      //   `${name}: ${(percent * 100).toFixed(0)}%`
+                      // }
+                      label={({ status, percent }) => `${status}: ${(percent * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
-                      dataKey="value"
+                      dataKey="count"
+                      //dataKey="value"
                     >
                       {stats.charts.statusDistribution
-                        .filter((s) => s.value > 0)
+                        .filter((s) => s.count > 0)
+                        //.filter((s) => s.value > 0)
                         .map((entry, index) => (
                           <Cell
                             key={`cell-${index}`}
@@ -403,14 +409,17 @@ const AdminDashboard = () => {
                         <p className="font-medium text-gray-900">{job.title}</p>
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            job.status === "approved"
+                            job.status?.toLowerCase() === "approved"
+                            //job.status === "approved"
                               ? "bg-green-100 text-green-700"
-                              : job.status === "pending"
+                              : job.status?.toLowerCase() === "pending"
+                             // : job.status === "pending"
                                 ? "bg-yellow-100 text-yellow-700"
                                 : "bg-red-100 text-red-700"
                           }`}
                         >
-                          {job.status}
+                          {/* {job.status} */}
+                          {job.status?.charAt(0).toUpperCase() + job.status?.slice(1).toLowerCase()}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600">{job.company}</p>
@@ -452,7 +461,7 @@ const AdminDashboard = () => {
                         <p className="font-medium text-gray-900">
                           {app.student}
                         </p>
-                        <span
+                        {/* <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
                             app.status === "selected"
                               ? "bg-purple-100 text-purple-700"
@@ -464,6 +473,19 @@ const AdminDashboard = () => {
                           }`}
                         >
                           {app.status}
+                        </span> */}
+                                                <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            app.status?.toLowerCase() === "selected"
+                              ? "bg-purple-100 text-purple-700"
+                              : app.status?.toLowerCase() === "shortlisted"
+                                ? "bg-green-100 text-green-700"
+                                : app.status?.toLowerCase() === "rejected"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-blue-100 text-blue-700"
+                          }`}
+                        >
+                          {app.status?.charAt(0).toUpperCase() + app.status?.slice(1).toLowerCase()}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600">{app.job}</p>

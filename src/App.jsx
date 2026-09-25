@@ -9,7 +9,7 @@ import LandingPage from "./pages/LandingPage";
 import Login from "./pages/auth/Login";
 import RegisterStudent from "./pages/auth/RegisterStudent";
 import RegisterRecruiter from "./pages/auth/RegisterRecruiter";
-import RegisterAdmin from "./pages/auth/RegisterAdmin";
+//import RegisterAdmin from "./pages/auth/RegisterAdmin";
 import RegisterAlumni from "./pages/auth/RegisterAlumni";
 
 // Student Pages
@@ -114,7 +114,7 @@ const App = () => {
             )
           }
         />
-        <Route
+        {/* <Route
           path="/register/admin"
           element={
             !user ? (
@@ -123,7 +123,7 @@ const App = () => {
               <Navigate to={`/${user.role}/dashboard`} />
             )
           }
-        />
+        /> */}
         <Route
           path="/register/alumni"
           element={
@@ -177,7 +177,16 @@ const App = () => {
           }
         />
 
-        <Route path="/student/placements" element={<MyPlacements />} />
+               <Route
+          path="/student/placements"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <MyPlacements />
+            </ProtectedRoute>
+          }
+        />
+
+
         {/* Recruiter Routes */}
         <Route
           path="/recruiter/dashboard"

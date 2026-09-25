@@ -21,14 +21,18 @@ const ManageStudents = () => {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const params = { page: currentPage, limit: 10 };
+      //const params = { page: currentPage, limit: 10 };
+       const params = { page: currentPage - 1, size: 10 };
       if (search) params.search = search;
       if (branch) params.branch = branch;
       if (placementStatus) params.placementStatus = placementStatus;
       const res = await adminAPI.getAllStudents(params);
-      setStudents(res.data.students);
-      setTotalPages(res.data.totalPages);
-      setTotalStudents(res.data.totalStudents);
+      // setStudents(res.data.students);
+      // setTotalPages(res.data.totalPages);
+      // setTotalStudents(res.data.totalStudents);
+      setStudents(page.content); 
+      setTotalPages(page.totalPages); 
+      setTotalStudents(page.totalElements); 
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -187,71 +191,110 @@ const ManageStudents = () => {
                       </td>
                     </tr>
                   ) : (
-                    students.map((student, index) => (
-                      <tr
-                        key={student._id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {(currentPage - 1) * 10 + index + 1}
-                        </td>
+                    // students.map((student, index) => (
+                    //   <tr
+                    //     key={student._id}
+                    //     className="hover:bg-gray-50 transition-colors"
+                    //   >
+                    //     <td className="px-6 py-4 text-sm text-gray-500">
+                    //       {(currentPage - 1) * 10 + index + 1}
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <span className="text-sm font-bold text-primary-600">
+                    //         {student.registrationNumber}
+                    //       </span>
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <div className="flex items-center space-x-3">
+                    //         <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                    //           <span className="text-sm font-bold text-primary-600">
+                    //             {(student.personalInfo?.firstName || "?")[0]}
+                    //           </span>
+                    //         </div>
+                    //         <div>
+                    //           <p className="text-sm font-semibold text-gray-900">
+                    //             {student.personalInfo?.firstName}{" "}
+                    //             {student.personalInfo?.lastName}
+                    //           </p>
+                    //           <p className="text-xs text-gray-400">
+                    //             {student.userId?.email}
+                    //           </p>
+                    //         </div>
+                    //       </div>
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-700">
+                    //       {student.academicInfo?.branch || "—"}
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <span
+                    //         className={`text-sm font-bold ${getCGPAColor(student.academicInfo?.cgpa)}`}
+                    //       >
+                    //         {student.academicInfo?.cgpa || "—"}
+                    //       </span>
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <div className="flex flex-wrap gap-1">
+                    //         {student.skills?.slice(0, 3).map((skill, i) => (
+                    //           <span
+                    //             key={i}
+                    //             className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded"
+                    //           >
+                    //             {skill}
+                    //           </span>
+                    //         ))}
+                    //         {student.skills?.length > 3 && (
+                    //           <span className="text-xs text-gray-400">
+                    //             +{student.skills.length - 3}
+                    //           </span>
+                    //         )}
+                    //       </div>
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <span
+                    //         className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.placementStatus)}`}
+                    //       >
+                    //         {student.placementStatus === "placed"
+                    //           ? "Placed"
+                    //           : "Unplaced"}
+                    //       </span>
+                    //     </td>
+                    //   </tr>
+                    // ))
+
+                                        students.map((student, index) => (
+                      <tr key={student.id} className="hover:bg-gray-50 transition-colors"> {/* was student._id */}
+                        <td className="px-6 py-4 text-sm text-gray-500">{(currentPage - 1) * 10 + index + 1}</td>
                         <td className="px-6 py-4">
-                          <span className="text-sm font-bold text-primary-600">
-                            {student.registrationNumber}
-                          </span>
+                          <span className="text-sm font-bold text-primary-600">{student.registrationNumber}</span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-bold text-primary-600">
-                                {(student.personalInfo?.firstName || "?")[0]}
-                              </span>
+                              <span className="text-sm font-bold text-primary-600">{(student.firstName || "?")[0]}</span>
                             </div>
                             <div>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {student.personalInfo?.firstName}{" "}
-                                {student.personalInfo?.lastName}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {student.userId?.email}
-                              </p>
+                              <p className="text-sm font-semibold text-gray-900">{student.firstName} {student.lastName}</p>
+                              <p className="text-xs text-gray-400">{student.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {student.academicInfo?.branch || "—"}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{student.branch || "—"}</td>
                         <td className="px-6 py-4">
-                          <span
-                            className={`text-sm font-bold ${getCGPAColor(student.academicInfo?.cgpa)}`}
-                          >
-                            {student.academicInfo?.cgpa || "—"}
-                          </span>
+                          <span className={`text-sm font-bold ${getCGPAColor(student.cgpa)}`}>{student.cgpa || "—"}</span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-wrap gap-1">
                             {student.skills?.slice(0, 3).map((skill, i) => (
-                              <span
-                                key={i}
-                                className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded"
-                              >
-                                {skill}
-                              </span>
+                              <span key={i} className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">{skill}</span>
                             ))}
                             {student.skills?.length > 3 && (
-                              <span className="text-xs text-gray-400">
-                                +{student.skills.length - 3}
-                              </span>
+                              <span className="text-xs text-gray-400">+{student.skills.length - 3}</span>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span
-                            className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.placementStatus)}`}
-                          >
-                            {student.placementStatus === "placed"
-                              ? "Placed"
-                              : "Unplaced"}
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.placementStatus)}`}>
+                            {student.placementStatus?.toLowerCase() === "placed" ? "Placed" : "Unplaced"}
                           </span>
                         </td>
                       </tr>

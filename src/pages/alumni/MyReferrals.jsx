@@ -11,7 +11,7 @@ const MyReferrals = () => {
   const fetchReferrals = async () => {
     try {
       const res = await alumniAPI.getMyReferrals();
-      setReferrals(res.data.referrals);
+       setReferrals(res.data.data); // was res.data.referrals
     } catch (error) {
       toast.error("Failed to load referrals");
     } finally {
@@ -50,10 +50,7 @@ const MyReferrals = () => {
 
           <div className="grid gap-4">
             {referrals.map((ref) => (
-              <div
-                key={ref._id}
-                className="bg-white shadow rounded-lg p-6 flex justify-between"
-              >
+               <div key={ref.id} className="bg-white shadow rounded-lg p-6 flex justify-between"> {/* was ref._id */}
                 <div>
                   <h2 className="font-bold text-lg">
                     {ref.company} — {ref.role}
@@ -75,10 +72,7 @@ const MyReferrals = () => {
                   </p>
                 </div>
 
-                <button
-                  onClick={() => deleteReferral(ref._id)}
-                  className="text-red-600 hover:underline"
-                >
+                <button onClick={() => deleteReferral(ref.id)} className="text-red-600 hover:underline"> {/* was ref._id */}
                   Delete
                 </button>
               </div>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
 import Sidebar from "../../components/common/Sidebar";
 import api from "../../services/api";
+import { getApplicationStatusLabel } from "../../utils/helpers";
 import {
   LineChart,
   Line,
@@ -33,7 +34,8 @@ const RecruiterDashboard = () => {
       setLoading(true);
       const response = await api.get("/analytics/recruiter/dashboard");
       if (response.data.success) {
-        setStats(response.data.stats);
+        //setStats(response.data.stats);
+        setStats(response.data.data);
       }
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -314,15 +316,18 @@ const RecruiterDashboard = () => {
                       </div>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          job.status === "approved"
+                          //job.status === "approved"
+                          job.status?.toLowerCase() === "approved"
                             ? "bg-green-100 text-green-700"
-                            : job.status === "pending"
+                            : job.status?.toLowerCase() === "pending"
+                            //: job.status === "pending"
                               ? "bg-yellow-100 text-yellow-700"
                               : "bg-red-100 text-red-700"
                         }`}
                       >
-                        {job.status.charAt(0).toUpperCase() +
-                          job.status.slice(1)}
+                        {/* {job.status.charAt(0).toUpperCase() +
+                          job.status.slice(1)} */}
+                          {job.status.charAt(0).toUpperCase() + job.status.slice(1).toLowerCase()}
                       </span>
                     </div>
                   ))}
@@ -374,16 +379,20 @@ const RecruiterDashboard = () => {
                         </p>
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            app.status === "selected"
+                            //app.status === "selected"
+                            app.status?.toLowerCase() === "selected"
                               ? "bg-purple-100 text-purple-700"
-                              : app.status === "shortlisted"
+                              //: app.status === "shortlisted"
+                              : app.status?.toLowerCase() === "shortlisted"
                                 ? "bg-green-100 text-green-700"
-                                : app.status === "rejected"
+                                //: app.status === "rejected"
+                                : app.status?.toLowerCase() === "rejected"
                                   ? "bg-red-100 text-red-700"
                                   : "bg-blue-100 text-blue-700"
                           }`}
                         >
-                          {app.status}
+                          {/* {app.status} */}
+                          {getApplicationStatusLabel(app.status)}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 mb-1">

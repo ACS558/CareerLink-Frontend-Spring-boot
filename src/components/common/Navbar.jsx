@@ -33,7 +33,8 @@ const Navbar = () => {
       } else if (user.role === "alumni") {
         res = await alumniAPI.getProfile();
       }
-      setProfile(res?.data?.profile);
+     // setProfile(res?.data?.profile);
+      setProfile(res?.data?.data); //for the backend built on Spring boot
     } catch (error) {
       console.error("Fetch profile error:", error);
     } finally {
@@ -75,8 +76,10 @@ const Navbar = () => {
     if (user?.role === "recruiter" && profile?.companyInfo?.companyName) {
       return profile.companyInfo.companyName[0].toUpperCase();
     }
-    if (user?.role === "admin" && profile?.name) {
-      return profile.name[0].toUpperCase();
+   // if (user?.role === "admin" && profile?.name) {
+    if (user?.role === "admin" && profile?.firstName) {
+      //return profile.name[0].toUpperCase();
+      return profile.firstName[0].toUpperCase();
     }
     if (user?.role === "alumni" && profile?.personalInfo?.firstName) {
       return profile.personalInfo.firstName[0].toUpperCase();
@@ -118,17 +121,21 @@ const Navbar = () => {
             {!loading && (
               <div className="flex items-center">
                 {/* Student Photo */}
-                {user?.role === "student" && profile?.photo?.url ? (
+               {/* {user?.role === "student" && profile?.photo?.url ? ( */}
+                {user?.role === "student" && profile?.photoUrl ? (
                   <img
-                    src={profile.photo.url}
+                   // src={profile.photo.url}
+                    src={profile.photoUrl} //for the backend built on Spring boot
                     alt="Profile"
                     className="w-9 h-9 rounded-full object-cover border-2 border-primary-200"
                   />
                 ) : /* Recruiter Logo */
                 user?.role === "recruiter" &&
-                  profile?.companyInfo?.companyLogo?.url ? (
+                  //profile?.companyInfo?.companyLogo?.url ? (
+                  profile?.companyLogoUrl ? (
                   <img
-                    src={profile.companyInfo.companyLogo.url}
+                    //src={profile.companyInfo.companyLogo.url}
+                    src={profile.companyLogoUrl} //for the backend built on Spring boot
                     alt="Company Logo"
                     className="w-9 h-9 rounded-lg object-contain border border-gray-200 p-1 bg-white"
                   />

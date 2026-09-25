@@ -24,7 +24,9 @@ const NotificationsPage = () => {
       if (filter === "read") params.isRead = true;
 
       const res = await notificationAPI.getNotifications(params);
-      setNotifications(res.data.notifications);
+      const page = res.data.data; 
+      setNotifications(page.content || page);
+      //setNotifications(res.data.notifications);
     } catch (error) {
       console.error("Fetch notifications error:", error);
     } finally {
@@ -35,10 +37,12 @@ const NotificationsPage = () => {
   const handleNotificationClick = async (notification) => {
     try {
       if (!notification.isRead) {
-        await notificationAPI.markAsRead(notification._id);
+        await notificationAPI.markAsRead(notification.id);
+        //await notificationAPI.markAsRead(notification._id);
         setNotifications((prev) =>
           prev.map((n) =>
-            n._id === notification._id ? { ...n, isRead: true } : n,
+           // n._id === notification._id ? { ...n, isRead: true } : n,
+            n.id === notification.id ? { ...n, isRead: true } : n,
           ),
         );
       }
@@ -79,7 +83,8 @@ const NotificationsPage = () => {
 
     try {
       await notificationAPI.deleteNotification(id);
-      setNotifications((prev) => prev.filter((n) => n._id !== id));
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      //setNotifications((prev) => prev.filter((n) => n._id !== id));
       toast.success("Notification deleted");
     } catch (error) {
       console.error("Delete error:", error);
@@ -100,7 +105,8 @@ const NotificationsPage = () => {
       alumni_approved: "✅",
       alumni_rejected: "❌",
     };
-    return icons[type] || "🔔";
+    //return icons[type] || "🔔";
+    return icons[type?.toLowerCase()] || "🔔";
   };
 
   const getPriorityColor = (priority) => {
@@ -109,7 +115,8 @@ const NotificationsPage = () => {
       medium: "bg-blue-100 border-blue-300",
       low: "bg-gray-100 border-gray-300",
     };
-    return colors[priority] || colors.medium;
+    //return colors[priority] || colors.medium;
+    return colors[priority?.toLowerCase()] || colors.medium;
   };
 
   return (

@@ -23,7 +23,8 @@ const ManageApplications = () => {
       const params = {};
       if (filterStatus) params.status = filterStatus;
       const res = await adminAPI.getAllApplications(params);
-      setApplications(res.data.applications);
+      //setApplications(res.data.applications);
+      setApplications(res.data.data);
     } catch (error) {
       console.error("Fetch applications error:", error);
     } finally {
@@ -111,36 +112,53 @@ const ManageApplications = () => {
                       </td>
                     </tr>
                   ) : (
+                    // applications.map((app, index) => (
+                    //   <tr key={app._id} className="hover:bg-gray-50">
+                    //     <td className="px-6 py-4 text-sm text-gray-500">
+                    //       {index + 1}
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <p className="text-sm font-medium text-gray-900">
+                    //         {app.studentId?.personalInfo?.firstName}{" "}
+                    //         {app.studentId?.personalInfo?.lastName}
+                    //       </p>
+                    //       <p className="text-xs text-gray-500">
+                    //         {app.studentId?.registrationNumber}
+                    //       </p>
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-700">
+                    //       {app.jobId?.title}
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-700">
+                    //       {app.jobId?.recruiterId?.companyInfo?.companyName}
+                    //     </td>
+                    //     <td className="px-6 py-4">
+                    //       <span
+                    //         className={`text-xs font-semibold px-2 py-1 rounded-full ${getApplicationStatusColor(app.status)}`}
+                    //       >
+                    //         {getApplicationStatusLabel(app.status)}
+                    //       </span>
+                    //     </td>
+                    //     <td className="px-6 py-4 text-sm text-gray-500">
+                    //       {formatDate(app.appliedAt)}
+                    //     </td>
+                    //   </tr>
+                    // ))
                     applications.map((app, index) => (
-                      <tr key={app._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {index + 1}
-                        </td>
+                      <tr key={app.id} className="hover:bg-gray-50"> {/* was app._id */}
+                        <td className="px-6 py-4 text-sm text-gray-500">{index + 1}</td>
                         <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-900">
-                            {app.studentId?.personalInfo?.firstName}{" "}
-                            {app.studentId?.personalInfo?.lastName}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {app.studentId?.registrationNumber}
-                          </p>
+                          <p className="text-sm font-medium text-gray-900">{app.studentName}</p>
+                          <p className="text-xs text-gray-500">{app.registrationNumber}</p>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {app.jobId?.title}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {app.jobId?.recruiterId?.companyInfo?.companyName}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{app.jobTitle}</td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{app.companyName}</td>
                         <td className="px-6 py-4">
-                          <span
-                            className={`text-xs font-semibold px-2 py-1 rounded-full ${getApplicationStatusColor(app.status)}`}
-                          >
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getApplicationStatusColor(app.status)}`}>
                             {getApplicationStatusLabel(app.status)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {formatDate(app.appliedAt)}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{formatDate(app.appliedAt)}</td>
                       </tr>
                     ))
                   )}

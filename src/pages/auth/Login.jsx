@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { authAPI } from "../../services/api";
 import toast from "react-hot-toast";
-import socket from "../../socket/socketClient";
+//import socket from "../../socket/socketClient";
 
 const Login = () => {
   const { login } = useAuth();
@@ -26,17 +26,24 @@ const Login = () => {
 
     try {
       const response = await authAPI.login(formData);
-      const { token, user, lastLogin } = response.data;
+      //const { token, user, lastLogin } = response.data;
 
-      console.log("🟢 Login response:", response.data);
-      console.log("🕒 Last login from backend:", lastLogin);
+      const { token, userId, email, role, name, previousLastLogin, roleLevel } = response.data.data;
 
-      // ✅ CONNECT SOCKET IMMEDIATELY AFTER LOGIN
-      console.log("🔌 Connecting to Socket.IO...");
-      socket.connect(token);
+      console.log("🟢 Login response:", response.data.data);
+      //console.log("🕒 Last login from backend:", lastLogin);
+      console.log("🕒 Last login from backend:", previousLastLogin);
 
+      //Note: socket connection is handled inside AuthContext.login() itself —
+      // no need to call socket.connect() separately here.
+      /* console.log("🔌 Connecting to Socket.IO...");
+      socket.connect(token); */
+      
+      //this line added while building the backend on Spring boot. The backend built on node.js and Express.js was sending user object in the response, but the backend built on Spring boot is sending userId, email, role, name and previousLastLogin instead of user object. So we need to create a user object here before calling login() function.
+      const user = { userId, email, role, name, roleLevel }; 
       toast.success("Login successful!");
-      login(token, user, lastLogin);
+      //login(token, user, lastLogin);
+      login(token, user, previousLastLogin);
     } catch (error) {
       console.error("Login error:", error);
       toast.error(error.response?.data?.message || "Login failed");

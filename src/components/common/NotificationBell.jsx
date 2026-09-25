@@ -10,7 +10,6 @@ const NotificationBell = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  // ✅ REMOVE THE 30000 PARAMETER - No more polling!
   const {
     unreadCount,
     notifications,
@@ -18,7 +17,7 @@ const NotificationBell = () => {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
-  } = useNotifications(); // ✅ No polling interval!
+  } = useNotifications(); 
 
   useEffect(() => {
     if (showDropdown && notifications.length === 0) {
@@ -26,10 +25,7 @@ const NotificationBell = () => {
     }
   }, [showDropdown]);
 
-  // ✅ NO NEED FOR SOCKET LISTENER HERE - Hook handles it!
-  // Remove the socket.on('new_notification') useEffect from here
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -42,7 +38,8 @@ const NotificationBell = () => {
 
   const handleNotificationClick = async (notification) => {
     try {
-      await markAsRead(notification._id);
+      //await markAsRead(notification._id); //for the backend built on node.js and Express.js
+      await markAsRead(notification.id); //for the backend built on Spring boot
       setShowDropdown(false);
 
       if (notification.actionUrl) {
@@ -95,7 +92,8 @@ const NotificationBell = () => {
       referral_rejected: "❌",
       new_referral_posted: "🎯",
     };
-    return icons[type] || "🔔";
+    //return icons[type] || "🔔"; //for the backend built on node.js and express.js
+    return icons[type?.toLowerCase()] || "🔔"; //for the backend built on spring boot
   };
 
   const getPriorityColor = (priority) => {
@@ -104,7 +102,8 @@ const NotificationBell = () => {
       medium: "bg-blue-100 border-blue-300",
       low: "bg-gray-100 border-gray-300",
     };
-    return colors[priority] || colors.medium;
+    //return colors[priority] || colors.medium; //for the backend built on node.js and express.js
+    return colors[priority?.toLowerCase()] || colors.medium; //for the backend built on spring boot
   };
 
   return (
@@ -163,7 +162,8 @@ const NotificationBell = () => {
               <div className="divide-y divide-gray-100">
                 {notifications.map((notification) => (
                   <div
-                    key={notification._id}
+                    //key={notification._id}
+                    key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
                     className={`px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
                       !notification.isRead ? "bg-blue-50" : ""

@@ -18,7 +18,8 @@ const RecruiterJobView = () => {
   const fetchJob = async () => {
     try {
       const res = await jobAPI.getJobById(id);
-      setJob(res.data.job);
+      setJob(res.data.data);
+      //setJob(res.data.job);
     } catch (error) {
       console.error("Fetch job error:", error);
     } finally {
@@ -74,27 +75,37 @@ const RecruiterJobView = () => {
                   <span
                     className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusBadgeColor(job.approvalStatus)}`}
                   >
-                    {job.approvalStatus.charAt(0).toUpperCase() +
-                      job.approvalStatus.slice(1)}
+                    {/* {job.approvalStatus.charAt(0).toUpperCase() +
+                      job.approvalStatus.slice(1)} */}
+                      {job.approvalStatus.charAt(0).toUpperCase() + job.approvalStatus.slice(1).toLowerCase()}
+                  
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-3 text-sm text-gray-600">
                   <span>📍 {job.location}</span>
                   <span>💼 {job.jobType}</span>
                   <span>🏢 {job.workMode}</span>
-                  {job.salaryRange?.min && (
+                  {/* {job.salaryRange?.min && (
                     <span>
                       💰 {job.salaryRange.min}-{job.salaryRange.max}{" "}
                       {job.salaryType}
                     </span>
+                  )} */}
+                  {job.salaryMin && (
+                    <span>💰 {job.salaryMin}-{job.salaryMax} {job.salaryType}</span>
                   )}
                 </div>
               </div>
-              {job.approvalStatus === "approved" && (
+              {/* {job.approvalStatus === "approved" && (
                 <Link
                   to={`/recruiter/jobs/${job._id}/applications`}
                   className="btn-success px-6 py-3"
                 >
+                  View Applications
+                </Link>
+              )} */}
+              {job.approvalStatus?.toLowerCase() === "approved" && (
+                <Link to={`/recruiter/jobs/${job.id}/applications`} className="btn-success px-6 py-3">
                   View Applications
                 </Link>
               )}
@@ -134,7 +145,8 @@ const RecruiterJobView = () => {
               )}
 
               {/* Status Messages */}
-              {job.approvalStatus === "pending" && (
+              {/* {job.approvalStatus === "pending" && ( */}
+              {job.approvalStatus?.toLowerCase() === "pending" && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <p className="text-yellow-800 font-semibold">
                     ⏳ Awaiting Admin Approval
@@ -145,7 +157,8 @@ const RecruiterJobView = () => {
                 </div>
               )}
 
-              {job.approvalStatus === "rejected" && job.rejectionReason && (
+              {/* {job.approvalStatus === "rejected" && job.rejectionReason && ( */}
+              {job.approvalStatus?.toLowerCase() === "rejected" && job.rejectionReason && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <p className="text-red-800 font-semibold">
                     ❌ Job Posting Rejected
@@ -235,18 +248,21 @@ const RecruiterJobView = () => {
                   Eligibility Criteria
                 </h2>
                 <div className="space-y-3">
-                  {job.eligibilityCriteria?.minCGPA && (
+                  {/* {job.eligibilityCriteria?.minCGPA && ( */}
+                  {job.minCgpa && (
                     <div className="flex items-center space-x-2">
                       <span className="text-2xl">📊</span>
                       <div>
                         <p className="text-xs text-gray-500">Minimum CGPA</p>
                         <p className="font-semibold text-gray-900">
-                          {job.eligibilityCriteria.minCGPA}
+                          {/* {job.eligibilityCriteria.minCGPA} */}
+                          {job.minCgpa}
                         </p>
                       </div>
                     </div>
                   )}
-                  {job.eligibilityCriteria?.maxBacklogs !== undefined && (
+                  {/* {job.eligibilityCriteria?.maxBacklogs !== undefined && ( */}
+                  {job.maxBacklogs !== undefined && (
                     <div className="flex items-center space-x-2">
                       <span className="text-2xl">📚</span>
                       <div>
@@ -254,12 +270,14 @@ const RecruiterJobView = () => {
                           Maximum Backlogs
                         </p>
                         <p className="font-semibold text-gray-900">
-                          {job.eligibilityCriteria.maxBacklogs}
+                          {/* {job.eligibilityCriteria.maxBacklogs} */}
+                          {job.maxBacklogs}
                         </p>
                       </div>
                     </div>
                   )}
-                  {job.eligibilityCriteria?.branches?.length > 0 && (
+                  {/* {job.eligibilityCriteria?.branches?.length > 0 && ( */}
+                  {job.eligibleBranches?.length > 0 && (
                     <div className="flex items-start space-x-2">
                       <span className="text-2xl">🎓</span>
                       <div>
@@ -267,7 +285,8 @@ const RecruiterJobView = () => {
                           Eligible Branches
                         </p>
                         <div className="flex flex-wrap gap-1">
-                          {job.eligibilityCriteria.branches.map((branch, i) => (
+                          {/* {job.eligibilityCriteria.branches.map((branch, i) => ( */}
+                          {job.eligibleBranches.map((branch, i) => (
                             <span
                               key={i}
                               className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
@@ -279,7 +298,8 @@ const RecruiterJobView = () => {
                       </div>
                     </div>
                   )}
-                  {job.eligibilityCriteria?.graduationYears?.length > 0 && (
+                  {/* {job.eligibilityCriteria?.graduationYears?.length > 0 && ( */}
+                  {job.graduationYears?.length > 0 && (
                     <div className="flex items-start space-x-2">
                       <span className="text-2xl">📅</span>
                       <div>
@@ -287,7 +307,8 @@ const RecruiterJobView = () => {
                           Graduation Years
                         </p>
                         <p className="font-semibold text-gray-900">
-                          {job.eligibilityCriteria.graduationYears.join(", ")}
+                          {/* {job.eligibilityCriteria.graduationYears.join(", ")} */}
+                          {job.graduationYears.join(", ")}
                         </p>
                       </div>
                     </div>
@@ -296,9 +317,10 @@ const RecruiterJobView = () => {
               </div>
 
               {/* Actions */}
-              {job.approvalStatus === "approved" && (
+              {/* {job.approvalStatus === "approved" && ( */}
+             {job.approvalStatus?.toLowerCase() === "approved" && (
                 <Link
-                  to={`/recruiter/jobs/${job._id}/applications`}
+                  to={`/recruiter/jobs/${job.id}/applications`}
                   className="block w-full btn-primary py-3 text-center text-lg"
                 >
                   View Applications

@@ -15,8 +15,8 @@ const ActivityFeed = () => {
   const fetchActivities = async () => {
     setLoading(true);
     try {
-      const res = await notificationAPI.getNotifications({ limit: 50 });
-      setActivities(res.data.notifications);
+      const res = await notificationAPI.getNotifications({ size: 50 }); // was { limit: 50 }
+      setActivities(res.data.data.content); // was res.data.notifications
     } catch (error) {
       console.error("Fetch activities error:", error);
     } finally {
@@ -37,18 +37,15 @@ const ActivityFeed = () => {
       alumni_approved: "✅",
       alumni_rejected: "❌",
     };
-    return icons[type] || "🔔";
+    return icons[type?.toLowerCase()] || "🔔"; // was icons[type]
   };
 
   const getActivityColor = (type) => {
-    if (
-      type.includes("approved") ||
-      type.includes("selected") ||
-      type.includes("shortlisted")
-    ) {
+    const t = type?.toLowerCase() || ""; // backend sends uppercase enum names
+    if (t.includes("approved") || t.includes("selected") || t.includes("shortlisted")) {
       return "bg-green-100 text-green-800 border-green-300";
     }
-    if (type.includes("rejected")) {
+    if (t.includes("rejected")) {
       return "bg-red-100 text-red-800 border-red-300";
     }
     return "bg-blue-100 text-blue-800 border-blue-300";
@@ -84,10 +81,7 @@ const ActivityFeed = () => {
               {/* Activities */}
               <div className="space-y-6">
                 {activities.map((activity, index) => (
-                  <div
-                    key={activity._id}
-                    className="relative flex items-start space-x-6"
-                  >
+                  <div key={activity.id} className="relative flex items-start space-x-6"> {/* was activity._id */}
                     {/* Timeline Dot */}
                     <div
                       className={`relative z-10 flex-shrink-0 w-16 h-16 rounded-full border-4 border-white flex items-center justify-center ${getActivityColor(activity.type)}`}
@@ -115,10 +109,10 @@ const ActivityFeed = () => {
 
                       {/* Metadata */}
                       <div className="flex items-center space-x-4 text-xs text-gray-400">
-                        <span className="capitalize">
-                          {activity.type.replace(/_/g, " ")}
+                                                <span className="capitalize">
+                          {activity.type.toLowerCase().replace(/_/g, " ")} {/* was activity.type.replace without lowercase */}
                         </span>
-                        {activity.priority === "high" && (
+                        {activity.priority?.toLowerCase() === "high" && ( // was === "high"
                           <span className="text-red-600 font-semibold">
                             High Priority
                           </span>

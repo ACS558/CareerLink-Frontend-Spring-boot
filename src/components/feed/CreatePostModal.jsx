@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import feedAPI from "../../services/feedAPI";
+import { feedAPI } from "../../services/api"; // was default import from feedAPI.js (now merged into api.js)
 import { toast } from "react-hot-toast";
 
 const CreatePostModal = ({
@@ -8,18 +8,39 @@ const CreatePostModal = ({
   onPostCreated,
   editPost = null,
 }) => {
+  const { user } = useAuth(); //Added this line to get the current user(Spring boot backend)
   const [textContent, setTextContent] = useState("");
   const [images, setImages] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  //(Spring boot backend) Added these states to handle job post linking
+  const [isJobPost, setIsJobPost] = useState(false);
+  const [linkedJobId, setLinkedJobId] = useState("");
+  const [myJobs, setMyJobs] = useState([]);
+
   useEffect(() => {
     if (editPost) {
       setTextContent(editPost.textContent);
       setImagePreviews(editPost.images?.map((img) => img.url) || []);
+     
+      //spring boot backend
+      if (editPost.linkedJobId) {
+        setIsJobPost(true);
+        setLinkedJobId(String(editPost.linkedJobId));
+      }
+
     }
   }, [editPost]);
+
+
+  //spring boot backend: fetch the user's jobs when the modal opens
+  useEffect(() => {
+    if (isOpen && user?.role === "recruiter") {
+      jobAPI.getMyJobs().then((res) => setMyJobs(res.data.data)).catch(() => {});
+    }
+  }, [isOpen, user]);
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -117,6 +138,12 @@ const CreatePostModal = ({
       const formData = new FormData();
       formData.append("textContent", textContent.trim());
 
+      //spring boot backend: add job post linking info if applicable
+      if (isJobPost && linkedJobId) {
+        formData.append("linkedJobId", linkedJobId);
+        formData.append("isJobPost", "true");
+      }
+
       // Add images
       images.forEach((image) => {
         formData.append("images", image);
@@ -129,7 +156,7 @@ const CreatePostModal = ({
 
       // Create or update post
       if (editPost) {
-        await feedAPI.updatePost(editPost._id, formData);
+        await feedAPI.updatePost(editPost.id, formData); // was editPost._id
         toast.success("Post updated successfully");
       } else {
         await feedAPI.createPost(formData);
@@ -141,6 +168,9 @@ const CreatePostModal = ({
       setImages([]);
       setDocuments([]);
       setImagePreviews([]);
+      //spring boot backend: reset job post linking states
+      setIsJobPost(false);
+      setLinkedJobId("");
 
       // Callback
       if (onPostCreated) onPostCreated();
@@ -219,6 +249,39 @@ const CreatePostModal = ({
               {textContent.length} / 5000 characters
             </p>
           </div>
+
+
+          //spring boot backend: Job post linking section for recruiters
+                    {/* Link to a Job Posting (recruiters only) */}
+          {user?.role === "recruiter" && myJobs.length > 0 && (
+            <div className="mb-4">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                <input
+                  type="checkbox"
+                  checked={isJobPost}
+                  onChange={(e) => {
+                    setIsJobPost(e.target.checked);
+                    if (!e.target.checked) setLinkedJobId("");
+                  }}
+                />
+                Link this post to one of your job postings
+              </label>
+              {isJobPost && (
+                <select
+                  value={linkedJobId}
+                  onChange={(e) => setLinkedJobId(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select a job posting...</option>
+                  {myJobs.map((job) => (
+                    <option key={job.id} value={job.id}>
+                      {job.title} — {job.location}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
 
           {/* Image Previews */}
           {imagePreviews.length > 0 && (

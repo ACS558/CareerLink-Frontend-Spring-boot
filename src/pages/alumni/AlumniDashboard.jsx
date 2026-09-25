@@ -16,7 +16,7 @@ const AlumniDashboard = () => {
   const fetchProfile = async () => {
     try {
       const res = await alumniAPI.getProfile();
-      setProfile(res.data.profile);
+      setProfile(res.data.data); // was res.data.profile
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -41,23 +41,27 @@ const AlumniDashboard = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Welcome, {profile?.personalInfo?.firstName} 🎓
-              </h1>
+                            <h1 className="text-2xl font-bold text-gray-900">Welcome, {profile?.firstName} 🎓</h1> {/* was personalInfo?.firstName */}
               <p className="text-gray-600">Alumni Dashboard</p>
             </div>
-            <span
+            {/* <span
               className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusBadgeColor(profile?.verificationStatus)}`}
             >
               {profile?.verificationStatus === "verified"
                 ? "Verified"
                 : profile?.verificationStatus?.charAt(0).toUpperCase() +
                   profile?.verificationStatus?.slice(1)}
+            </span> */}
+                        <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusBadgeColor(profile?.verificationStatus)}`}>
+              {profile?.verificationStatus?.toLowerCase() === "approved"
+                ? "Verified"
+                : profile?.verificationStatus?.charAt(0).toUpperCase() + profile?.verificationStatus?.slice(1).toLowerCase()}
             </span>
           </div>
 
           {/* Verification Banners */}
-          {profile?.verificationStatus === "pending" && (
+          {/* {profile?.verificationStatus === "pending" && ( */}
+           {profile?.verificationStatus?.toLowerCase() === "pending" && (
             <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center space-x-3">
               <span className="text-2xl">⏳</span>
               <div>
@@ -72,7 +76,8 @@ const AlumniDashboard = () => {
             </div>
           )}
 
-          {profile?.verificationStatus === "rejected" && (
+          {/* {profile?.verificationStatus === "rejected" && ( */}
+           {profile?.verificationStatus?.toLowerCase() === "rejected" && (
             <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
               <span className="text-2xl">❌</span>
               <div>
@@ -86,7 +91,8 @@ const AlumniDashboard = () => {
             </div>
           )}
 
-          {profile?.verificationStatus === "verified" && (
+          {/* {profile?.verificationStatus === "verified" && ( */}
+          {profile?.verificationStatus?.toLowerCase() === "approved" && (
             <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
               <span className="text-2xl">✅</span>
               <div>
@@ -94,7 +100,7 @@ const AlumniDashboard = () => {
                 <p className="text-green-700 text-sm">
                   You are verified! You can now post referrals and help current
                   students.
-                  {profile?.verifiedBy && ` Verified by: ${profile.verifiedBy}`}
+                  {/* {profile?.verifiedBy && ` Verified by: ${profile.verifiedBy}`} */}
                 </p>
               </div>
             </div>
@@ -117,9 +123,10 @@ const AlumniDashboard = () => {
                 <p className="text-sm font-medium text-gray-500">Company</p>
                 <span className="text-lg">🏢</span>
               </div>
-              <p className="text-lg font-bold text-gray-900">
+              {/* <p className="text-lg font-bold text-gray-900">
                 {profile?.currentRole?.company || "N/A"}
-              </p>
+              </p> */}
+               <p className="text-lg font-bold text-gray-900">{profile?.currentCompany || "N/A"}</p> {/* was currentRole?.company */}
               <p className="text-sm text-gray-500 mt-1">Current Company</p>
             </div>
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -127,9 +134,7 @@ const AlumniDashboard = () => {
                 <p className="text-sm font-medium text-gray-500">Role</p>
                 <span className="text-lg">💼</span>
               </div>
-              <p className="text-lg font-bold text-gray-900">
-                {profile?.currentRole?.designation || "N/A"}
-              </p>
+             <p className="text-lg font-bold text-gray-900">{profile?.currentDesignation || "N/A"}</p> {/* was currentRole?.designation */}
               <p className="text-sm text-gray-500 mt-1">Current Role</p>
             </div>
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -137,9 +142,7 @@ const AlumniDashboard = () => {
                 <p className="text-sm font-medium text-gray-500">Experience</p>
                 <span className="text-lg">📈</span>
               </div>
-              <p className="text-lg font-bold text-gray-900">
-                {profile?.currentRole?.experience || 0} Yrs
-              </p>
+                <p className="text-lg font-bold text-gray-900">{profile?.experience || 0} Yrs</p> {/* was currentRole?.experience */}
               <p className="text-sm text-gray-500 mt-1">Work Experience</p>
             </div>
           </div>
@@ -160,51 +163,34 @@ const AlumniDashboard = () => {
               </div>
               <div className="flex items-center space-x-4 mb-4">
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-2xl font-bold text-purple-600">
-                    {(profile?.personalInfo?.firstName || "?")[0]}
-                  </span>
+                  <span className="text-2xl font-bold text-purple-600">{(profile?.firstName || "?")[0]}</span> {/* was personalInfo?.firstName */}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">
-                    {profile?.personalInfo?.firstName}{" "}
-                    {profile?.personalInfo?.lastName}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {profile?.registrationNumber} • Batch{" "}
-                    {profile?.academicInfo?.graduationYear}
-                  </p>
+                  <p className="font-semibold text-gray-900">{profile?.firstName} {profile?.lastName}</p> {/* was personalInfo?.firstName/.lastName */}
+                  <p className="text-sm text-gray-500">{profile?.registrationNumber} • Batch {profile?.graduationYear}</p> {/* was academicInfo?.graduationYear */}
                 </div>
               </div>
               <div className="space-y-2 border-t pt-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Branch</span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {profile?.academicInfo?.branch || "—"}
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">{profile?.branch || "—"}</span> {/* was academicInfo?.branch */}
+
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Graduation</span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {profile?.academicInfo?.graduationYear || "—"}
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">{profile?.graduationYear || "—"}</span> {/* was academicInfo?.graduationYear */}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Company</span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {profile?.currentRole?.company || "—"}
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">{profile?.currentCompany || "—"}</span> {/* was currentRole?.company */}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Designation</span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {profile?.currentRole?.designation || "—"}
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">{profile?.currentDesignation || "—"}</span> {/* was currentRole?.designation */}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Experience</span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {profile?.currentRole?.experience || 0} years
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">{profile?.experience || 0} years</span> {/* was currentRole?.experience */}
                 </div>
               </div>
             </div>

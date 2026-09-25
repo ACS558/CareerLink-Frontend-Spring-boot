@@ -29,7 +29,7 @@ const RegisterRecruiter = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  /* const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
@@ -46,6 +46,45 @@ const RegisterRecruiter = () => {
 
     try {
       const { confirmPassword, ...submitData } = formData;
+      await authAPI.registerRecruiter(submitData);
+
+      toast.success("Registration successful! Awaiting admin verification.");
+      navigate("/login");
+    } catch (error) {
+      console.error("Registration error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }; */
+
+
+    const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const submitData = {
+        email: formData.email,
+        password: formData.password,
+        companyName: formData.companyName,
+        industry: formData.industry,
+        location: formData.location,
+        contactName: formData.contactPersonName,
+        contactDesignation: formData.contactPersonDesignation,
+        contactPhone: formData.contactPersonPhone,
+        contactEmail: formData.contactPersonEmail,
+      };
       await authAPI.registerRecruiter(submitData);
 
       toast.success("Registration successful! Awaiting admin verification.");

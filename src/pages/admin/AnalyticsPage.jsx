@@ -58,7 +58,8 @@ const AnalyticsPage = () => {
 
       const response = await api.get("/analytics/admin/advanced", { params });
       if (response.data.success) {
-        setAnalytics(response.data.analytics);
+        setAnalytics(response.data.data);
+        //setAnalytics(response.data.analytics);
       }
     } catch (error) {
       console.error("Error fetching analytics:", error);
@@ -72,7 +73,8 @@ const AnalyticsPage = () => {
       // ✅ IMPROVED: Get companies from analytics data
       const response = await api.get("/analytics/admin/advanced");
 
-      if (response.data.success && response.data.analytics?.companyWise) {
+      //if (response.data.success && response.data.analytics?.companyWise) {
+      if (response.data.success && response.data.data?.companyWise) {
         const companyList = response.data.analytics.companyWise
           .map((c) => c.company)
           .filter((c) => c && c !== "Unknown");
@@ -456,7 +458,8 @@ const AnalyticsPage = () => {
                       />
                       <Bar
                         yAxisId="right"
-                        dataKey="avgATSScore"
+                        dataKey="avgAtsScore"
+                        //dataKey="avgATSScore"
                         fill="#F59E0B"
                         name="Avg ATS Score"
                       />

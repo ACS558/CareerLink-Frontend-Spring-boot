@@ -6,7 +6,382 @@ import Sidebar from "../../components/common/Sidebar";
 import toast from "react-hot-toast";
 import { uploadAPI } from "../../services/api";
 
+
+//Below is the code used for the backend built on spring boot
+
 const StudentProfile = () => {
+  const [profile, setProfile] = useState(null);
+  const [completion, setCompletion] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("personal");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
+
+  const [personalInfo, setPersonalInfo] = useState({
+    firstName: "", lastName: "", phoneNumber: "", dateOfBirth: "", gender: "",
+  });
+  const [academicInfo, setAcademicInfo] = useState({
+    department: "", branch: "", semester: "", cgpa: "", percentage: "", backlogs: 0, graduationYear: "",
+  });
+  const [skills, setSkills] = useState([]);
+  const [skillInput, setSkillInput] = useState("");
+  const [projects, setProjects] = useState([]);
+  const [internships, setInternships] = useState([]);
+  const [certifications, setCertifications] = useState([]);
+  const [externalLinks, setExternalLinks] = useState([]);
+  const [socialLinks, setSocialLinks] = useState({ linkedin: "", github: "", portfolio: "", twitter: "" });
+
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showInternshipModal, setShowInternshipModal] = useState(false);
+  const [showCertModal, setShowCertModal] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+
+  const [newProject, setNewProject] = useState({ title: "", description: "", technologies: "", liveLink: "", githubLink: "" });
+  const [newInternship, setNewInternship] = useState({ companyName: "", role: "", duration: "", startDate: "", endDate: "" });
+  const [newCert, setNewCert] = useState({ name: "", issuedBy: "", issueDate: "", credentialUrl: "" });
+  const [newLink, setNewLink] = useState({ name: "", url: "" });
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const [profileRes, completionRes] = await Promise.all([
+        studentAPI.getProfile(),
+        studentAPI.getProfileCompletion(),
+      ]);
+      const p = profileRes.data.data;
+      setProfile(p);
+      setCompletion(completionRes.data.data);
+
+      setPersonalInfo({
+        firstName: p.firstName || "",
+        lastName: p.lastName || "",
+        phoneNumber: p.phoneNumber || "",
+        dateOfBirth: p.dateOfBirth ? p.dateOfBirth.split("T")[0] : "",
+        gender: p.gender || "",
+      });
+      setAcademicInfo({
+        department: p.department || "",
+        branch: p.branch || "",
+        semester: p.semester || "",
+        cgpa: p.cgpa || "",
+        percentage: p.percentage || "",
+        backlogs: p.backlogs || 0,
+        graduationYear: p.graduationYear || "",
+      });
+      setSkills(p.skills || []);
+      setProjects(p.projects || []);
+      setInternships(p.internships || []);
+      setCertifications(p.certifications || []);
+      setExternalLinks(p.externalLinks || []);
+      setSocialLinks({
+        linkedin: p.linkedin || "",
+        github: p.github || "",
+        portfolio: p.portfolio || "",
+        twitter: p.twitter || "",
+      });
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // CRITICAL: our backend's PUT /student/profile is a FULL replace — every
+  // field must be sent on every save, or missing ones get cleared/nulled.
+  // This builds the complete current state, with `overrides` for whatever
+  // section is actually being changed.
+  const buildFullPayload = (overrides = {}) => ({
+    firstName: personalInfo.firstName,
+    lastName: personalInfo.lastName,
+    phoneNumber: personalInfo.phoneNumber,
+    dateOfBirth: personalInfo.dateOfBirth || null,
+    gender: personalInfo.gender,
+    department: academicInfo.department,
+    branch: academicInfo.branch,
+    semester: academicInfo.semester ? Number(academicInfo.semester) : null,
+    cgpa: academicInfo.cgpa ? Number(academicInfo.cgpa) : null,
+    percentage: academicInfo.percentage ? Number(academicInfo.percentage) : null,
+    backlogs: academicInfo.backlogs ? Number(academicInfo.backlogs) : 0,
+    graduationYear: academicInfo.graduationYear ? Number(academicInfo.graduationYear) : null,
+    skills,
+    linkedin: socialLinks.linkedin,
+    github: socialLinks.github,
+    portfolio: socialLinks.portfolio,
+    twitter: socialLinks.twitter,
+    projects,
+    internships,
+    certifications,
+    externalLinks,
+    ...overrides,
+  });
+
+  const savePersonalInfo = async () => {
+    setSaving(true);
+    try {
+      await studentAPI.updateProfile(buildFullPayload());
+      toast.success("Personal info updated!");
+      fetchProfile();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveAcademicInfo = async () => {
+    setSaving(true);
+    try {
+      await studentAPI.updateProfile(buildFullPayload());
+      toast.success("Academic info updated!");
+      fetchProfile();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveSocialLinks = async () => {
+    setSaving(true);
+    try {
+      await studentAPI.updateProfile(buildFullPayload());
+      toast.success("Social links updated!");
+      fetchProfile();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addSkill = () => {
+    if (skillInput.trim() && !skills.includes(skillInput.trim())) {
+      const updated = [...skills, skillInput.trim()];
+      setSkills(updated);
+      setSkillInput("");
+      studentAPI
+        .updateProfile(buildFullPayload({ skills: updated }))
+        .then(() => toast.success("Skill added!"))
+        .catch(console.error);
+    }
+  };
+
+  const removeSkill = (index) => {
+    const updated = skills.filter((_, i) => i !== index);
+    setSkills(updated);
+    studentAPI
+      .updateProfile(buildFullPayload({ skills: updated }))
+      .then(() => toast.success("Skill removed!"))
+      .catch(console.error);
+  };
+
+  const addProject = async () => {
+    if (!newProject.title) {
+      toast.error("Title is required");
+      return;
+    }
+    const proj = {
+      ...newProject,
+      technologies: newProject.technologies.split(",").map((t) => t.trim()).filter(Boolean),
+    };
+    const updated = [...projects, proj];
+    setProjects(updated);
+    try {
+      await studentAPI.updateProfile(buildFullPayload({ projects: updated }));
+      toast.success("Project added!");
+      setNewProject({ title: "", description: "", technologies: "", liveLink: "", githubLink: "" });
+      setShowProjectModal(false);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const removeProject = async (index) => {
+    const updated = projects.filter((_, i) => i !== index);
+    setProjects(updated);
+    await studentAPI.updateProfile(buildFullPayload({ projects: updated }));
+    toast.success("Project removed!");
+  };
+
+  const addInternship = async () => {
+    if (!newInternship.companyName || !newInternship.role) {
+      toast.error("Company and role required");
+      return;
+    }
+    const updated = [...internships, newInternship];
+    setInternships(updated);
+    try {
+      await studentAPI.updateProfile(buildFullPayload({ internships: updated }));
+      toast.success("Internship added!");
+      setNewInternship({ companyName: "", role: "", duration: "", startDate: "", endDate: "" });
+      setShowInternshipModal(false);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const removeInternship = async (index) => {
+    const updated = internships.filter((_, i) => i !== index);
+    setInternships(updated);
+    await studentAPI.updateProfile(buildFullPayload({ internships: updated }));
+    toast.success("Internship removed!");
+  };
+
+  const addCertification = async () => {
+    if (!newCert.name) {
+      toast.error("Name is required");
+      return;
+    }
+    const updated = [...certifications, newCert];
+    setCertifications(updated);
+    try {
+      await studentAPI.updateProfile(buildFullPayload({ certifications: updated }));
+      toast.success("Certification added!");
+      setNewCert({ name: "", issuedBy: "", issueDate: "", credentialUrl: "" });
+      setShowCertModal(false);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const removeCertification = async (index) => {
+    const updated = certifications.filter((_, i) => i !== index);
+    setCertifications(updated);
+    await studentAPI.updateProfile(buildFullPayload({ certifications: updated }));
+    toast.success("Certification removed!");
+  };
+
+  const addExternalLink = async () => {
+    if (!newLink.name || !newLink.url) {
+      toast.error("Name and URL required");
+      return;
+    }
+    const updated = [...externalLinks, newLink];
+    setExternalLinks(updated);
+    try {
+      await studentAPI.updateProfile(buildFullPayload({ externalLinks: updated }));
+      toast.success("Link added!");
+      setNewLink({ name: "", url: "" });
+      setShowLinkModal(false);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const removeExternalLink = async (index) => {
+    const updated = externalLinks.filter((_, i) => i !== index);
+    setExternalLinks(updated);
+    await studentAPI.updateProfile(buildFullPayload({ externalLinks: updated }));
+    toast.success("Link removed!");
+  };
+
+  const tabs = [
+    { id: "uploads", label: "Photo & Resume", icon: "📤" },
+    { id: "personal", label: "Personal", icon: "👤" },
+    { id: "academic", label: "Academic", icon: "📚" },
+    { id: "skills", label: "Skills", icon: "💻" },
+    { id: "projects", label: "Projects", icon: "🛠️" },
+    { id: "internships", label: "Internships", icon: "🏢" },
+    { id: "certifications", label: "Certs", icon: "🏆" },
+    { id: "links", label: "Links", icon: "🔗" },
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Only JPEG, PNG, and WEBP images are allowed");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const response = await uploadAPI.uploadPhoto(file);
+      setProfile(response.data.data); // backend returns the full updated profile
+      toast.success("Photo uploaded successfully!");
+    } catch (error) {
+      console.error("Photo upload error:", error);
+      toast.error(error.response?.data?.message || "Failed to upload photo");
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (
+      !["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(file.type)
+    ) {
+      toast.error("Only PDF, DOC, and DOCX files are allowed");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB");
+      return;
+    }
+
+    setUploadingResume(true);
+    try {
+      const response = await uploadAPI.uploadResume(file);
+      setProfile(response.data.data); // backend returns the full updated profile
+      toast.success("Resume uploaded and parsed successfully!");
+      fetchProfile(); // refresh profile completion status too
+    } catch (error) {
+      console.error("Resume upload error:", error);
+      toast.error(error.response?.data?.message || "Failed to upload resume");
+    } finally {
+      setUploadingResume(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!window.confirm("Delete your profile photo?")) return;
+    try {
+      await uploadAPI.deletePhoto();
+      toast.success("Photo deleted successfully");
+      fetchProfile();
+    } catch (error) {
+      console.error("Delete photo error:", error);
+    }
+  };
+
+  const handleDeleteResume = async () => {
+    if (!window.confirm("Delete your resume?")) return;
+    try {
+      await uploadAPI.deleteResume();
+      toast.success("Resume deleted successfully");
+      fetchProfile();
+    } catch (error) {
+      console.error("Delete resume error:", error);
+    }
+  };
+
+
+
+//Below is the code commented because it was used for the backend built on node.js and express.js
+
+/* const StudentProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -320,9 +695,9 @@ const StudentProfile = () => {
     { id: "internships", label: "Internships", icon: "🏢" },
     { id: "certifications", label: "Certs", icon: "🏆" },
     { id: "links", label: "Links", icon: "🔗" },
-  ];
+  ]; */
 
-  if (loading) {
+/*   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -450,7 +825,7 @@ const StudentProfile = () => {
     } catch (error) {
       console.error("Delete resume error:", error);
     }
-  };
+  }; */
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -468,10 +843,13 @@ const StudentProfile = () => {
             </div>
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-500">Completion:</span>
-              <span
+              {/* <span
                 className={`font-bold text-lg ${getCompletionColor(profile?.completionPercentage || 0)}`}
               >
                 {profile?.completionPercentage || 0}%
+              </span> */}
+                            <span className={`font-bold text-lg ${getCompletionColor(completion?.completionPercentage || 0)}`}>
+                {completion?.completionPercentage || 0}%
               </span>
             </div>
           </div>
@@ -511,16 +889,20 @@ const StudentProfile = () => {
                     </h4>
                     <div className="flex items-start space-x-6">
                       <div className="w-32 h-32 bg-primary-100 rounded-full flex items-center justify-center overflow-hidden">
-                        {profile?.photo?.url ? (
+                        {/* {profile?.photo?.url ? ( */}
+                        {profile?.photoUrl ? (
                           <img
-                            src={profile.photo.url}
+                            //src={profile.photo.url}
+                            src={profile?.photoUrl}
                             alt="Profile"
                             className="w-full h-full object-cover"
-                            key={profile.photo.url}
+                            //key={profile.photo.url}
+                            key={profile?.photoUrl}
                           />
                         ) : (
                           <span className="text-5xl font-bold text-primary-600">
-                            {(profile?.personalInfo?.firstName || "?")[0]}
+                            {/* {(profile?.personalInfo?.firstName || "?")[0]} */}
+                            {(profile?.firstName || "?")[0]}
                           </span>
                         )}
                       </div>
@@ -530,7 +912,8 @@ const StudentProfile = () => {
                         </p>
 
                         {/* Show upload status */}
-                        {profile?.photo?.url && (
+                        {/* {profile?.photo?.url && ( */}
+                        {profile?.photoUrl && (
                           <p className="text-xs text-green-600 mb-2">
                             ✓ Photo uploaded successfully
                           </p>
@@ -540,7 +923,8 @@ const StudentProfile = () => {
                           <label className="btn-primary px-4 py-2 cursor-pointer">
                             {uploadingPhoto
                               ? "Uploading..."
-                              : profile?.photo?.url
+                              : profile?.photoUrl
+                              //: profile?.photo?.url
                                 ? "Change Photo"
                                 : "Upload Photo"}
                             <input
@@ -551,7 +935,8 @@ const StudentProfile = () => {
                               className="hidden"
                             />
                           </label>
-                          {profile?.photo?.url && (
+                          {/* {profile?.photo?.url && ( */}
+                          {profile?.photoUrl && (
                             <button
                               onClick={handleDeletePhoto}
                               className="btn-danger px-4 py-2"
@@ -567,7 +952,8 @@ const StudentProfile = () => {
                   {/* Resume */}
                   <div>
                     <h4 className="font-semibold text-gray-800 mb-3">Resume</h4>
-                    {profile?.resume?.url ? (
+                    {/* {profile?.resume?.url ? ( */}
+                    {profile?.resumeUrl ? (
                       <div className="space-y-3">
                         {/* Uploaded Resume Display */}
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -580,15 +966,19 @@ const StudentProfile = () => {
                                 </p>
                                 <p className="text-sm text-green-700 mt-1">
                                   Uploaded on:{" "}
-                                  {new Date(
+                                  {/* {new Date(
                                     profile.resume.uploadedAt,
-                                  ).toLocaleDateString()}
+                                  ).toLocaleDateString()} */}
+                                  {new Date(profile.resumeUploadedAt).toLocaleDateString()}
                                 </p>
-                                {profile.resume.parsedData && (
+                                {/* {profile.resume.parsedData && (
                                   <p className="text-xs text-green-600 mt-1">
                                     ✓ AI-parsed and auto-filled
                                   </p>
-                                )}
+                                )} */}
+                                <p className="text-xs text-green-600 mt-1">
+                                  ✓ AI-parsed and auto-filled
+                                </p>
                               </div>
                             </div>
 
@@ -626,7 +1016,8 @@ const StudentProfile = () => {
 
                           <div className="border border-gray-200 rounded-xl bg-gray-100 flex justify-center py-8">
                             <iframe
-                              src={profile.resume.url.replace(
+                              //src={profile.resume.url.replace(
+                              src={profile.resumeUrl.replace(
                                 "/upload/",
                                 "/upload/f_auto,w_900/",
                               )}
@@ -760,7 +1151,8 @@ const StudentProfile = () => {
                       <label className="label">Email Address</label>
                       <input
                         type="email"
-                        value={profile.personalInfo?.email || ""}
+                        //value={profile.personalInfo?.email || ""}
+                         value={profile.email || ""}
                         disabled
                         className="input-field"
                       />

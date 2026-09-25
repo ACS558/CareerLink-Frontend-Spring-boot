@@ -11,7 +11,8 @@ const ManageReferrals = () => {
   const fetchReferrals = async () => {
     try {
       const res = await adminAPI.getAllReferrals();
-      setReferrals(res.data.referrals);
+      //setReferrals(res.data.referrals);
+      setReferrals(res.data.data);
     } catch (error) {
       toast.error("Failed to fetch referrals");
     }
@@ -33,12 +34,13 @@ const ManageReferrals = () => {
 
           <div className="grid gap-4">
             {referrals.map((ref) => (
-              <div key={ref._id} className="bg-white p-5 shadow rounded-lg">
+              <div key={ref.id} className="bg-white p-5 shadow rounded-lg">
                 <h2 className="text-lg font-semibold">
                   {ref.company} — {ref.role}
                 </h2>
 
-                <p>Status: {ref.approvalStatus}</p>
+               // <p>Status: {ref.approvalStatus}</p>
+               <p>Status: {ref.approvalStatus?.charAt(0).toUpperCase() + ref.approvalStatus?.slice(1).toLowerCase()}</p>
 
                 <p className="text-gray-600">{ref.location}</p>
 

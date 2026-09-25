@@ -69,7 +69,8 @@ export const getStatusBadgeColor = (status) => {
     placed: "bg-green-100 text-green-800",
     unplaced: "bg-yellow-100 text-yellow-800",
   };
-  return colors[status] || "bg-gray-100 text-gray-800";
+  //return colors[status] || "bg-gray-100 text-gray-800";
+  return colors[status?.toLowerCase()] || "bg-gray-100 text-gray-800";
 };
 
 // Truncate text
@@ -95,7 +96,8 @@ export const getApplicationStatusColor = (status) => {
     selected: "bg-purple-100 text-purple-800",
     "on-hold": "bg-yellow-100 text-yellow-800",
   };
-  return colors[status] || "bg-gray-100 text-gray-800";
+  //return colors[status] || "bg-gray-100 text-gray-800";
+  return colors[status?.toLowerCase()] || "bg-gray-100 text-gray-800";
 };
 
 // Get application status label
@@ -107,10 +109,17 @@ export const getApplicationStatusLabel = (status) => {
     selected: "Selected",
     "on-hold": "On Hold",
   };
-  return labels[status] || status;
+  //return labels[status] || status;
+  return labels[status?.toLowerCase()] || status;
 };
 
 // Check if application is eligible for withdrawal
 export const canWithdrawApplication = (status) => {
-  return ["applied", "on-hold"].includes(status);
+  //return ["applied", "on-hold"].includes(status);
+  return ["applied", "on-hold"].includes(status?.toLowerCase());
 };
+
+
+// New shared helper — used wherever we display an ENUM_LIKE_THIS value. This was added when the backend was built on spring boot.
+export const formatEnum = (val) =>
+  val ? val.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";

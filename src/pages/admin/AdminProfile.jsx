@@ -21,9 +21,11 @@ const AdminProfile = () => {
   const fetchProfile = async () => {
     try {
       const res = await adminAPI.getProfile();
-      const p = res.data.profile;
+      const p = res.data.data;
+      //const p = res.data.profile;
       setProfile({
-        name: p.name || "",
+        name: [p.firstName, p.lastName].filter(Boolean).join(" "),
+       // name: p.name || "",
         department: p.department || "",
         phoneNumber: p.phoneNumber || "",
         email: p.email || "",
@@ -38,8 +40,15 @@ const AdminProfile = () => {
   const saveProfile = async () => {
     setSaving(true);
     try {
+      // await adminAPI.updateProfile({
+      //   name: profile.name,
+      //   department: profile.department,
+      //   phoneNumber: profile.phoneNumber,
+      const [firstName, ...rest] = profile.name.trim().split(" ");
+      const lastName = rest.join(" ");
       await adminAPI.updateProfile({
-        name: profile.name,
+        firstName: firstName || "",
+        lastName: lastName || "",
         department: profile.department,
         phoneNumber: profile.phoneNumber,
       });

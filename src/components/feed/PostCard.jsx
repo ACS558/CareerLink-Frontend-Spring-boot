@@ -1,15 +1,26 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import feedAPI from "../../services/feedAPI";
+import { feedAPI } from "../../services/api"; // was default import from feedAPI.js (now merged into api.js)
 import { toast } from "react-hot-toast";
 
 const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [viewTracked, setViewTracked] = useState(false);
   const cardRef = useRef(null);
+
+
+  //spring boot backend: handle navigation to linked job post based on user role
+  const handleViewLinkedJob = () => {
+    const role = currentUser?.role || user?.role;
+    if (role === "student") navigate(`/student/jobs/${post.linkedJobId}`);
+    else if (role === "recruiter") navigate(`/recruiter/jobs/${post.linkedJobId}`);
+    else if (role === "admin") navigate(`/admin/jobs/${post.linkedJobId}`);
+    else navigate(`/student/jobs/${post.linkedJobId}`); // fallback
+  };
 
   // Track view when post is visible
   useEffect(() => {
@@ -38,11 +49,11 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
         observer.unobserve(cardRef.current);
       }
     };
-  }, [post._id, viewTracked]);
+   }, [post.id, viewTracked]); // was post._id
 
   const trackView = async () => {
     try {
-      await feedAPI.trackView(post._id);
+      await feedAPI.trackView(post.id); // was post._id
       setViewTracked(true);
     } catch (error) {
       // Silently fail
@@ -53,9 +64,9 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this post?")) {
       try {
-        await feedAPI.deletePost(post._id);
+       await feedAPI.deletePost(post.id); // was post._id
         toast.success("Post deleted successfully");
-        if (onDelete) onDelete(post._id);
+       if (onDelete) onDelete(post.id); // was post._id
       } catch (error) {
         toast.error(error.response?.data?.message || "Failed to delete post");
       }
@@ -64,9 +75,9 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
 
   const handlePin = async () => {
     try {
-      await feedAPI.pinPost(post._id);
+      await feedAPI.pinPost(post.id); // was post._id
       toast.success("Post pinned successfully");
-      if (onPin) onPin(post._id);
+      if (onPin) onPin(post.id); // was post._id
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to pin post");
     }
@@ -74,9 +85,9 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
 
   const handleUnpin = async () => {
     try {
-      await feedAPI.unpinPost(post._id);
+      await feedAPI.unpinPost(post.id); // was post._id
       toast.success("Post unpinned successfully");
-      if (onUnpin) onUnpin(post._id);
+      if (onUnpin) onUnpin(post.id); // was post._id
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to unpin post");
     }
@@ -122,7 +133,7 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
   };
 
   const getRoleBadgeColor = (role) => {
-    switch (role) {
+    switch (role?.toLowerCase()) { // was switch (role)
       case "admin":
         return "bg-purple-100 text-purple-700";
       case "recruiter":
@@ -164,9 +175,9 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
           <div className="flex items-center gap-3">
             {/* Author Photo */}
             <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-              {post.authorPhoto ? (
+             {post.authorPhotoUrl ? ( // was post.authorPhoto
                 <img
-                  src={post.authorPhoto}
+                 src={post.authorPhotoUrl} // was post.authorPhoto
                   alt={post.authorName}
                   className="w-full h-full object-cover"
                 />
@@ -183,11 +194,8 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
                 <h3 className="font-semibold text-gray-900">
                   {post.authorName}
                 </h3>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(post.authorRole)}`}
-                >
-                  {post.authorRole.charAt(0).toUpperCase() +
-                    post.authorRole.slice(1)}
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(post.authorRole)}`}>
+                  {post.authorRole?.charAt(0).toUpperCase() + post.authorRole?.slice(1).toLowerCase()} {/* was raw slice(1) */}
                 </span>
                 {post.isPinned && (
                   <span className="text-red-500 font-semibold">📌 Pinned</span>
@@ -255,7 +263,7 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
                   {isAuthor && (
                     <button
                       onClick={() => {
-                        navigate(`/feed/edit/${post._id}`);
+                        navigate(`/feed/edit/${post.id}`); // was post._id
                         setShowMenu(false);
                       }}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -279,7 +287,7 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
                   {isAuthor && (
                     <button
                       onClick={() => {
-                        navigate(`/feed/analytics/${post._id}`);
+                        navigate(`/feed/analytics/${post.id}`); // was post._id
                         setShowMenu(false);
                       }}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -294,7 +302,7 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
         </div>
 
         {/* Job Badge (if linked to job) */}
-        {post.isJobPost && post.linkedJobId && (
+        {/* {post.isJobPost && post.linkedJobId && (
           <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
@@ -309,6 +317,30 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
                 onClick={() =>
                   navigate(`/student/jobs/${post.linkedJobId._id}`)
                 }
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+              >
+                View Job
+              </button>
+            </div>
+          </div>
+        )} */}
+
+
+                {post.isJobPost && post.linkedJobId && (
+          <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-900">
+                  💼 Job Posting: {post.linkedJobTitle || "View Details"}
+                </p>
+                <p className="text-xs text-blue-600">
+                  {post.linkedJobLocation}
+                  {post.linkedJobLocation && post.linkedJobType && " • "}
+                  {post.linkedJobType}
+                </p>
+              </div>
+              <button
+                onClick={handleViewLinkedJob}
                 className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
               >
                 View Job
@@ -368,7 +400,7 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
                       {doc.fileName}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {doc.fileType.toUpperCase()} •{" "}
+                      {doc.fileType?.toUpperCase()} •{" "}
                       {formatFileSize(doc.fileSize)}
                     </p>
                   </div>

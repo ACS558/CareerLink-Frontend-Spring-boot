@@ -16,7 +16,8 @@ const AdminManagement = () => {
   const fetchAdmins = async () => {
     try {
       const res = await adminAPI.getAllAdmins();
-      setAdmins(res.data.admins);
+      setAdmins(res.data.data);
+      //setAdmins(res.data.admins);
     } catch (error) {
       toast.error("Failed to load admins");
     }
@@ -149,7 +150,7 @@ const AdminManagement = () => {
                 </thead>
 
                 <tbody>
-                  {admins.map((admin) => (
+                  {/* {admins.map((admin) => (
                     <tr key={admin._id} className="border-b">
                       <td className="py-2">{admin.personalInfo?.name}</td>
 
@@ -168,7 +169,21 @@ const AdminManagement = () => {
                         )}
                       </td>
                     </tr>
-                  ))}
+                  ))} */}
+                  {admins.map((admin) => (
+                    <tr key={admin.id} className="border-b">
+                      <td className="py-2">{[admin.firstName, admin.lastName].filter(Boolean).join(" ")}</td>
+                      <td className="py-2">{admin.email}</td>
+                      <td className="py-2">{formatEnum(admin.roleLevel)}</td>
+                      <td className="py-2">
+                        {admin.roleLevel?.toUpperCase() !== "SUPER_ADMIN" && (
+                          <button onClick={() => handleDeleteAdmin(admin.id)} className="text-red-600 hover:underline">
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}  
                 </tbody>
               </table>
             </div>

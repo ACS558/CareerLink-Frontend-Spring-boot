@@ -1,4 +1,135 @@
-import { io } from "socket.io-client";
+//below is the code for socketClient.js which is used for connecting to the backend built on Spring boot using STOMP over WebSocket.
+
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
+
+class SocketClient {
+  constructor() {
+    this.client = null;
+    this.connected = false;
+    this.listeners = {}; // event name -> Set of callbacks (mimics Socket.IO's on/off/emit)
+    this.shownNotifications = new Set();
+  }
+
+  connect(token) {
+    if (this.connected) {
+      console.log("✅ STOMP already connected");
+      return this.client;
+    }
+    if (!token) {
+      console.error("❌ No token provided for socket connection");
+      return null;
+    }
+
+    const API_URL = import.meta.env.VITE_API_URL;
+    const WS_URL = API_URL.replace(/\/api\/?$/, "") + "/ws";
+
+    console.log("🔌 Connecting to STOMP...", WS_URL);
+
+    this.client = new Client({
+      webSocketFactory: () => new SockJS(WS_URL),
+      connectHeaders: { Authorization: `Bearer ${token}` },
+      reconnectDelay: 1000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+
+      onConnect: () => {
+        console.log("✅ STOMP connected!");
+        this.connected = true;
+
+        this.client.subscribe("/user/queue/notifications", (message) => {
+          const notification = JSON.parse(message.body);
+          this._handleIncomingNotification(notification);
+          this._emitLocal("new_notification", { notification, unreadCount: notification.unreadCount });
+        });
+      },
+
+      onDisconnect: () => {
+        console.log("❌ STOMP disconnected");
+        this.connected = false;
+      },
+
+      onStompError: (frame) => {
+        console.error("🔴 STOMP error:", frame.headers?.message);
+      },
+    });
+
+    this.client.activate();
+    return this.client;
+  }
+
+  _handleIncomingNotification(notification) {
+    const notificationId = notification.id; // numeric Long, not Mongo's _id
+
+    if (this.shownNotifications.has(notificationId)) return;
+
+    const notificationAge = Date.now() - new Date(notification.createdAt).getTime();
+    if (notificationAge >= 10000) return;
+
+    this.shownNotifications.add(notificationId);
+
+    const audio = new Audio("/sounds/notification.mp3");
+    audio.play().catch(() => console.log("🔇 Sound blocked by browser"));
+
+    if (Notification.permission === "granted") {
+      const browserNotif = new Notification(notification.title || "CareerLink", {
+        body: notification.message || "You have a new notification",
+        icon: "/logo.png",
+        badge: "/logo.png",
+        tag: String(notificationId),
+      });
+      browserNotif.onclick = () => { window.focus(); browserNotif.close(); };
+    }
+  }
+
+  disconnect() {
+    if (this.client) {
+      console.log("🔌 Disconnecting STOMP...");
+      this.client.deactivate();
+      this.client = null;
+      this.connected = false;
+      this.shownNotifications.clear();
+      this.listeners = {};
+    }
+  }
+
+  getSocket() {
+    //return this.client;
+    return this;
+  }
+
+  // Mimics Socket.IO's on/off/emit for existing consumers (useNotifications.js, NotificationBell.jsx)
+  on(event, callback) {
+    if (!this.listeners[event]) this.listeners[event] = new Set();
+    this.listeners[event].add(callback);
+  }
+
+  off(event, callback) {
+    this.listeners[event]?.delete(callback);
+  }
+
+  _emitLocal(event, data) {
+    this.listeners[event]?.forEach((cb) => cb(data));
+  }
+
+  emit(event, data) {
+    // No client-to-server events currently needed; kept for interface parity.
+    console.warn("⚠️ socketClient.emit() called but no STOMP outbound mapping defined for:", event);
+  }
+}
+
+const socketClient = new SocketClient();
+
+if (typeof window !== "undefined") {
+  window.socketClient = socketClient;
+}
+
+export default socketClient;
+
+
+
+//Below code is commented out because it was used for the backend built on node.js and Express.js. The backend has been switched to Spring boot, so this code is no longer needed. But it is kept for reference in case we need to switch back to the previous backend or for understanding the structure of API calls.
+/* import { io } from "socket.io-client";
 
 class SocketClient {
   constructor() {
@@ -145,3 +276,4 @@ if (typeof window !== "undefined") {
 }
 
 export default socketClient;
+ */

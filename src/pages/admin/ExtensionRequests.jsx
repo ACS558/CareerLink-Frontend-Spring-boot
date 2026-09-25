@@ -22,7 +22,8 @@ const ExtensionRequests = () => {
     try {
       setLoading(true);
       const response = await adminAPI.getExtensionRequests(filter);
-      setRequests(response.data.requests);
+      //setRequests(response.data.requests);
+      setRequests(response.data.data);
     } catch (error) {
       console.error("Error fetching requests:", error);
       toast.error("Failed to load requests");
@@ -34,7 +35,8 @@ const ExtensionRequests = () => {
   const fetchStats = async () => {
     try {
       const response = await adminAPI.getExtensionStats();
-      setStats(response.data.stats);
+      //setStats(response.data.stats);
+      setStats(response.data.data);
     } catch (error) {
       console.error("Error fetching stats:", error);
     }
@@ -47,7 +49,8 @@ const ExtensionRequests = () => {
       setProcessing(true);
       await adminAPI.reviewExtensionRequest(
         reviewModal.studentId,
-        reviewModal._id,
+       // reviewModal._id,
+        reviewModal.id,
         action,
         action === "approve" ? extensionDays : null,
       );
@@ -72,11 +75,18 @@ const ExtensionRequests = () => {
       rejected: "bg-red-100 text-red-700 border-red-300",
     };
 
+    // return (
+    //   <span
+    //     className={`px-3 py-1 rounded-full text-xs font-semibold border ${styles[status]}`}
+    //   >
+    //     {status.charAt(0).toUpperCase() + status.slice(1)}
+    //   </span>
+    // );
+
+    const key = status?.toLowerCase();
     return (
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-semibold border ${styles[status]}`}
-      >
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${styles[key] || styles.pending}`}>
+        {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
       </span>
     );
   };
@@ -266,7 +276,8 @@ const ExtensionRequests = () => {
             <div className="space-y-4">
               {requests.map((request) => (
                 <div
-                  key={request._id}
+                  //key={request._id}
+                  key={request.id}
                   className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 hover:shadow-md transition"
                 >
                   <div className="flex items-start justify-between">
@@ -429,7 +440,8 @@ const ExtensionRequests = () => {
                     <div className="flex items-center space-x-3">
                       {getStatusBadge(request.status)}
 
-                      {request.status === "pending" && (
+                      {/* {request.status === "pending" && ( */}
+                      {request.status?.toLowerCase() === "pending" && (
                         <button
                           onClick={() => setReviewModal(request)}
                           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
