@@ -11,7 +11,7 @@ const PendingReferrals = () => {
   const fetchPendingReferrals = async () => {
     try {
       const res = await adminAPI.getPendingReferrals();
-      setReferrals(res.data.referrals);
+      setReferrals(res.data.data); // was res.data.referrals
     } catch (error) {
       toast.error("Failed to load referrals");
     }
@@ -57,7 +57,7 @@ const PendingReferrals = () => {
           ) : (
             <div className="grid gap-4">
               {referrals.map((ref) => (
-                <div key={ref._id} className="bg-white p-5 shadow rounded-lg">
+               <div key={ref.id} className="bg-white p-5 shadow rounded-lg"> {/* was ref._id */}
                   <h2 className="text-lg font-semibold">
                     {ref.company} — {ref.role}
                   </h2>
@@ -67,17 +67,11 @@ const PendingReferrals = () => {
                   <p className="text-sm mt-2">{ref.description}</p>
 
                   <div className="flex gap-3 mt-4">
-                    <button
-                      onClick={() => verifyReferral(ref._id, "approve")}
-                      className="bg-green-600 text-white px-4 py-1 rounded"
-                    >
+                    <button onClick={() => verifyReferral(ref.id, "approve")} className="bg-green-600 text-white px-4 py-1 rounded"> {/* was ref._id */}
                       Approve
                     </button>
 
-                    <button
-                      onClick={() => verifyReferral(ref._id, "reject")}
-                      className="bg-red-600 text-white px-4 py-1 rounded"
-                    >
+                    <button onClick={() => verifyReferral(ref.id, "reject")} className="bg-red-600 text-white px-4 py-1 rounded"> {/* was ref._id */}
                       Reject
                     </button>
                   </div>
