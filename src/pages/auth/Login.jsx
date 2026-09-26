@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 const Login = () => {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    emailOrRegNo: "",
+    identifier: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
@@ -79,8 +79,8 @@ const Login = () => {
               <label className="label">Email or Registration Number</label>
               <input
                 type="text"
-                name="emailOrRegNo"
-                value={formData.emailOrRegNo}
+                name="identifier"
+                value={formData.identifier}
                 onChange={handleChange}
                 placeholder="student@college.edu or Y22ACS558"
                 className="input-field"
