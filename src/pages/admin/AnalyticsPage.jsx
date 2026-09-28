@@ -57,9 +57,11 @@ const AnalyticsPage = () => {
       if (filters.company) params.company = filters.company;
 
       const response = await api.get("/analytics/admin/advanced", { params });
-      if (response.data.success) {
-        setAnalytics(response.data.data);
+      if (response.data && response.data.success) {
+        setAnalytics(response.data.data || {});
         //setAnalytics(response.data.analytics);
+      }else {
+        console.warn("Analytics response was unsuccessful:", response.data);
       }
     } catch (error) {
       console.error("Error fetching analytics:", error);
@@ -75,7 +77,8 @@ const AnalyticsPage = () => {
 
       //if (response.data.success && response.data.analytics?.companyWise) {
       if (response.data.success && response.data.data?.companyWise) {
-        const companyList = response.data.analytics.companyWise
+        //const companyList = response.data.analytics.companyWise
+        const companyList = response.data.data.companyWise
           .map((c) => c.company)
           .filter((c) => c && c !== "Unknown");
         setCompanies([...new Set(companyList)]);
