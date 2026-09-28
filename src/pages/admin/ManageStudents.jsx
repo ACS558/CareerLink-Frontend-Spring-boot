@@ -27,6 +27,7 @@ const ManageStudents = () => {
       if (branch) params.branch = branch;
       if (placementStatus) params.placementStatus = placementStatus;
       const res = await adminAPI.getAllStudents(params);
+      const page = res.data.data; // Spring's Page<T> wrapper
       // setStudents(res.data.students);
       // setTotalPages(res.data.totalPages);
       // setTotalStudents(res.data.totalStudents);
