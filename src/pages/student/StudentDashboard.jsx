@@ -239,7 +239,7 @@ const StudentDashboard = () => {
                     Avg ATS Score
                   </p>
                   <p className="text-3xl font-bold text-orange-600 mt-2">
-                   // {stats?.avgATSScore || 0}
+                   {/* {stats?.avgATSScore || 0} */}
                     {stats?.avgAtsScore || 0} 
                   </p>
                 </div>
