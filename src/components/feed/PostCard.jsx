@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { feedAPI } from "../../services/api"; // was default import from feedAPI.js (now merged into api.js)
+import { feedAPI} from "../../services/api"; // was default import from feedAPI.js (now merged into api.js)
 import { toast } from "react-hot-toast";
+import { useAuth } from "../../context/AuthContext";
 
 const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
   const { user } = useAuth();
@@ -23,33 +24,51 @@ const PostCard = ({ post, currentUser, onDelete, onPin, onUnpin }) => {
   };
 
   // Track view when post is visible
+  // useEffect(() => {
+  //   if (viewTracked) return;
+
+  //   const observer = new IntersectionObserver(
+  //     (entries) => {
+  //       if (entries[0].isIntersecting) {
+  //         // Track view after 3 seconds of visibility
+  //         const timer = setTimeout(() => {
+  //           trackView();
+  //         }, 3000);
+
+  //         return () => clearTimeout(timer);
+  //       }
+  //     },
+  //     { threshold: 0.5 },
+  //   );
+
+  //   if (cardRef.current) {
+  //     observer.observe(cardRef.current);
+  //   }
+
+  //   return () => {
+  //     if (cardRef.current) {
+  //       observer.unobserve(cardRef.current);
+  //     }
+  //   };
+  //  }, [post.id, viewTracked]); // was post._id
+  
   useEffect(() => {
-    if (viewTracked) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          // Track view after 3 seconds of visibility
-          const timer = setTimeout(() => {
-            trackView();
-          }, 3000);
-
-          return () => clearTimeout(timer);
-        }
-      },
-      { threshold: 0.5 },
-    );
-
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-
-    return () => {
-      if (cardRef.current) {
-        observer.unobserve(cardRef.current);
-      }
-    };
-   }, [post.id, viewTracked]); // was post._id
+  if (viewTracked || !cardRef.current) return;
+  let timer;
+  const el = cardRef.current;
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      clearTimeout(timer);
+      if (entry.isIntersecting) timer = setTimeout(trackView, 3000);
+    },
+    { threshold: 0.5 }
+  );
+  observer.observe(el);
+  return () => {
+    clearTimeout(timer);
+    observer.disconnect();
+  };
+}, [post.id, viewTracked]);
 
   const trackView = async () => {
     try {
