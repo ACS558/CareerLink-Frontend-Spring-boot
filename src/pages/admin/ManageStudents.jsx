@@ -342,6 +342,44 @@ const ManageStudents = () => {
                       </tr>
                     ))
                   )}
+                  {showExtendModal && studentToExtend && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Extend Account</h2>
+            <div className="mb-4 bg-gray-50 p-4 rounded-lg">
+              <p className="font-bold text-gray-900">{studentToExtend.firstName} {studentToExtend.lastName}</p>
+              <p className="text-sm text-gray-600">{studentToExtend.registrationNumber}</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Current status: {studentToExtend.accountStatus?.replace(/_/g, " ")}
+              </p>
+            </div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Extend by (days)</label>
+            <input
+              type="number"
+              min="1"
+              value={extendDays}
+              onChange={(e) => setExtendDays(e.target.value)}
+              className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 mb-6"
+            />
+            <div className="flex space-x-3">
+              <button
+                onClick={() => { setShowExtendModal(false); setStudentToExtend(null); }}
+                disabled={extending}
+                className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExtend}
+                disabled={extending}
+                className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold disabled:opacity-50"
+              >
+                {extending ? "Extending..." : "Extend Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
                 </tbody>
               </table>
             </div>
@@ -411,44 +449,7 @@ const ManageStudents = () => {
                 )}
               </div>
             )}
-                  {showExtendModal && studentToExtend && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Extend Account</h2>
-            <div className="mb-4 bg-gray-50 p-4 rounded-lg">
-              <p className="font-bold text-gray-900">{studentToExtend.firstName} {studentToExtend.lastName}</p>
-              <p className="text-sm text-gray-600">{studentToExtend.registrationNumber}</p>
-              <p className="text-sm text-gray-500 mt-1">
-                Current status: {studentToExtend.accountStatus?.replace(/_/g, " ")}
-              </p>
-            </div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Extend by (days)</label>
-            <input
-              type="number"
-              min="1"
-              value={extendDays}
-              onChange={(e) => setExtendDays(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 mb-6"
-            />
-            <div className="flex space-x-3">
-              <button
-                onClick={() => { setShowExtendModal(false); setStudentToExtend(null); }}
-                disabled={extending}
-                className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleExtend}
-                disabled={extending}
-                className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold disabled:opacity-50"
-              >
-                {extending ? "Extending..." : "Extend Account"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                  
           </div>
         </main>
       </div>
