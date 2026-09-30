@@ -68,6 +68,9 @@ export const getStatusBadgeColor = (status) => {
     inactive: "bg-gray-100 text-gray-800",
     placed: "bg-green-100 text-green-800",
     unplaced: "bg-yellow-100 text-yellow-800",
+     expired: "bg-red-100 text-red-800",
+    deleted: "bg-gray-200 text-gray-500",
+    career_guidance_mode: "bg-blue-100 text-blue-800",
   };
   //return colors[status] || "bg-gray-100 text-gray-800";
   return colors[status?.toLowerCase()] || "bg-gray-100 text-gray-800";

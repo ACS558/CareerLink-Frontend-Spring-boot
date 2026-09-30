@@ -138,6 +138,7 @@ export const adminAPI = {
     const endpoint = action === "approve" ? "approve" : "reject";
     return api.post(`/admin/referrals/${id}/${endpoint}`);
   },
+    extendStudent: (id, days) => api.post(`/admin/students/${id}/extend`, { days }),
 };
 
 // ============ ALUMNI ============

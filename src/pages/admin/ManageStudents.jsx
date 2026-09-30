@@ -13,6 +13,10 @@ const ManageStudents = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalStudents, setTotalStudents] = useState(0);
+    const [showExtendModal, setShowExtendModal] = useState(false);
+  const [studentToExtend, setStudentToExtend] = useState(null);
+  const [extendDays, setExtendDays] = useState(30);
+  const [extending, setExtending] = useState(false);
 
   useEffect(() => {
     fetchStudents();
@@ -38,6 +42,24 @@ const ManageStudents = () => {
       console.error("Fetch error:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+    const handleExtend = async () => {
+    if (!studentToExtend) return;
+    setExtending(true);
+    try {
+      await adminAPI.extendStudent(studentToExtend.id, Number(extendDays));
+      toast.success(`Account extended by ${extendDays} days`);
+      setShowExtendModal(false);
+      setStudentToExtend(null);
+      setExtendDays(30);
+      fetchStudents();
+    } catch (error) {
+      console.error("Extend error:", error);
+      toast.error(error.response?.data?.message || "Failed to extend account");
+    } finally {
+      setExtending(false);
     }
   };
 
@@ -173,6 +195,9 @@ const ManageStudents = () => {
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Account Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Expiry</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -262,7 +287,7 @@ const ManageStudents = () => {
                     //   </tr>
                     // ))
 
-                                        students.map((student, index) => (
+                      students.map((student, index) => (
                       <tr key={student.id} className="hover:bg-gray-50 transition-colors"> {/* was student._id */}
                         <td className="px-6 py-4 text-sm text-gray-500">{(currentPage - 1) * 10 + index + 1}</td>
                         <td className="px-6 py-4">
@@ -297,6 +322,22 @@ const ManageStudents = () => {
                           <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.placementStatus)}`}>
                             {student.placementStatus?.toLowerCase() === "placed" ? "Placed" : "Unplaced"}
                           </span>
+                        </td>
+                                                <td className="px-6 py-4">
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.accountStatus)}`}>
+                            {student.accountStatus?.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {student.expiryDate ? new Date(student.expiryDate).toLocaleDateString() : "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => { setStudentToExtend(student); setShowExtendModal(true); }}
+                            className="text-primary-600 hover:underline text-sm font-medium"
+                          >
+                            Extend
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -370,6 +411,44 @@ const ManageStudents = () => {
                 )}
               </div>
             )}
+                  {showExtendModal && studentToExtend && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Extend Account</h2>
+            <div className="mb-4 bg-gray-50 p-4 rounded-lg">
+              <p className="font-bold text-gray-900">{studentToExtend.firstName} {studentToExtend.lastName}</p>
+              <p className="text-sm text-gray-600">{studentToExtend.registrationNumber}</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Current status: {studentToExtend.accountStatus?.replace(/_/g, " ")}
+              </p>
+            </div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Extend by (days)</label>
+            <input
+              type="number"
+              min="1"
+              value={extendDays}
+              onChange={(e) => setExtendDays(e.target.value)}
+              className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 mb-6"
+            />
+            <div className="flex space-x-3">
+              <button
+                onClick={() => { setShowExtendModal(false); setStudentToExtend(null); }}
+                disabled={extending}
+                className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExtend}
+                disabled={extending}
+                className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold disabled:opacity-50"
+              >
+                {extending ? "Extending..." : "Extend Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
           </div>
         </main>
       </div>
