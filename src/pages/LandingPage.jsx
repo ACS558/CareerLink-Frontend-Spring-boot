@@ -406,7 +406,7 @@ const LandingPage = () => {
                 step: "01",
                 title: "Create Your Profile",
                 description:
-                  "Upload your resume and let AI automatically fill your profile with skills, projects, and experience",
+                  "Upload your resume and fill your profile with skills, projects, and experience",
               },
               {
                 step: "02",
