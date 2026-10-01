@@ -51,9 +51,13 @@ const CreatePostModal = ({
 
     // 3. Fetch for admins / superadmins using your admin service
     if (user.role === "admin" || user.role === "superadmin") {
-      adminAPI.getAllJobs()
-        .then((res) => setAllJobs(res.data.data))
-        .catch((err) => console.error("Admin fetch failed:", err));
+     axios.get("/api/admin/jobs") 
+          .then((res) => {
+            // Extracts your custom standard backend wrapper array structure safely
+            const jobsData = res.data?.data ? res.data.data : res.data;
+            setAllJobs(jobsData);
+          })
+          .catch((err) => console.error("Admin fetch failed:", err));
     }
   }
 }, [isOpen, user]);
