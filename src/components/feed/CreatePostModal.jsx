@@ -253,7 +253,7 @@ const CreatePostModal = ({
 
 
                     {/* Link to a Job Posting (recruiters only) */}
-          {(user?.role === "recruiter" || user?.role === "admin") && myJobs.length > 0 && (
+          {(user?.role === "recruiter" || user?.role === "admin" || user?.role === "superadmin") && myJobs.length > 0  && (
             <div className="mb-4">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <input
