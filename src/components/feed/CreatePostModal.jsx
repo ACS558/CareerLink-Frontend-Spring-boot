@@ -252,7 +252,6 @@ const CreatePostModal = ({
           </div>
 
 
-          spring boot backend: Job post linking section for recruiters
                     {/* Link to a Job Posting (recruiters only) */}
           {(user?.role === "recruiter" || user?.role === "admin") && myJobs.length > 0 && (
             <div className="mb-4">
