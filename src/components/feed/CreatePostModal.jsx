@@ -38,7 +38,7 @@ const CreatePostModal = ({
 
   //spring boot backend: fetch the user's jobs when the modal opens
   useEffect(() => {
-    if (isOpen && user?.role === "recruiter") {
+    if (isOpen && (user?.role === "recruiter" || user?.role === "admin" || user?.role === "superadmin")) {
       jobAPI.getMyJobs().then((res) => setMyJobs(res.data.data)).catch(() => {});
     }
   }, [isOpen, user]);
