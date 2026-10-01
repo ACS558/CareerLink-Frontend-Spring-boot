@@ -8,7 +8,7 @@ export const useNotifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const soundRef = useRef(new Audio("/sounds/notification.mp3"));
+  //const soundRef = useRef(new Audio("/sounds/notification.mp3"));
   const isInitialLoad = useRef(true);
   const shownNotificationsRef = useRef(new Set());
 
@@ -40,27 +40,27 @@ export const useNotifications = () => {
         return;
       }
 
-      const notificationAge = Date.now() - new Date(data.notification.createdAt).getTime();
-      const isReallyNew = notificationAge < 10000;
+      // const notificationAge = Date.now() - new Date(data.notification.createdAt).getTime();
+      // const isReallyNew = notificationAge < 10000;
 
       shownNotificationsRef.current.add(notificationId);
 
       setUnreadCount(data.unreadCount);
       setNotifications((prev) => [data.notification, ...prev]);
 
-      if (!isInitialLoad.current && isReallyNew) {
-        soundRef.current.currentTime = 0;
-        soundRef.current.play().catch(() => {
-          console.log("Sound blocked by browser");
-        });
+      // if (!isInitialLoad.current && isReallyNew) {
+      //   soundRef.current.currentTime = 0;
+      //   soundRef.current.play().catch(() => {
+      //     console.log("Sound blocked by browser");
+      //   });
 
-        if (Notification.permission === "granted") {
-          new Notification(data.notification.title || "CareerLink", {
-            body: data.notification.message,
-            icon: "/logo.png",
-          });
-        }
-      }
+      //   if (Notification.permission === "granted") {
+      //     new Notification(data.notification.title || "CareerLink", {
+      //       body: data.notification.message,
+      //       icon: "/logo.png",
+      //     });
+      //   }
+      // }
     };
 
     console.log("✅ Attaching notification listener");
