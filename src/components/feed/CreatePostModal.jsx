@@ -38,10 +38,25 @@ const CreatePostModal = ({
 
   //spring boot backend: fetch the user's jobs when the modal opens
   useEffect(() => {
-    if (isOpen && (user?.role === "recruiter" || user?.role === "admin" || user?.role === "superadmin")) {
-      jobAPI.getMyJobs().then((res) => setMyJobs(res.data.data)).catch(() => {});
+  // 1. Only run API requests if the modal/dropdown is open
+  if (isOpen && user?.role) {
+    
+    // 2. Fetch for recruiters
+    if (user.role === "recruiter") {
+      jobAPI.getMyJobs()
+        .then((res) => setMyJobs(res.data.data))
+        .catch((err) => console.error("Recruiter fetch failed:", err));
     }
-  }, [isOpen, user]);
+
+    // 3. Fetch for admins / superadmins using your admin service
+    if (user.role === "admin" || user.role === "superadmin") {
+      adminAPI.getAllJobs()
+        .then((res) => setMyJobs(res.data.data))
+        .catch((err) => console.error("Admin fetch failed:", err));
+    }
+  }
+}, [isOpen, user]);
+
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
