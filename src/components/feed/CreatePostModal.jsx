@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { feedAPI, jobAPI } from "../../services/api"; // was default import from feedAPI.js (now merged into api.js)
+import { feedAPI, jobAPI, adminAPI } from "../../services/api"; // was default import from feedAPI.js (now merged into api.js)
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 
