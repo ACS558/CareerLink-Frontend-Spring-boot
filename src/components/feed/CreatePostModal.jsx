@@ -252,9 +252,9 @@ const CreatePostModal = ({
           </div>
 
 
-          //spring boot backend: Job post linking section for recruiters
+          spring boot backend: Job post linking section for recruiters
                     {/* Link to a Job Posting (recruiters only) */}
-          {user?.role === "recruiter" && myJobs.length > 0 && (
+          {(user?.role === "recruiter" || user?.role === "admin") && myJobs.length > 0 && (
             <div className="mb-4">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <input

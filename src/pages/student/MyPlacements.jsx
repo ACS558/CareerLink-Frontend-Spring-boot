@@ -143,7 +143,7 @@ const MyPlacements = () => {
                         <div>
                           <p className="text-sm text-gray-600 mb-1">Package</p>
                           <p className="text-2xl font-bold text-gray-900">
-                           // ₹{placement.package} LPA
+                           
                             ₹{placement.packageOffered} LPA
                           </p>
                         </div>
