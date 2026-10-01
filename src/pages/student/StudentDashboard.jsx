@@ -48,7 +48,7 @@ const StudentDashboard = () => {
       setDashboardMode(data.dashboardMode);
 
       // Only fetch stats if in normal mode
-      if (dashboardResponse.data.dashboardMode === "normal") {
+      if (data.dashboardMode === "normal") {
         const statsResponse = await api.get("/analytics/student/dashboard");
         if (statsResponse.data.success) {
           //setStats(statsResponse.data.stats);
@@ -377,17 +377,14 @@ const StudentDashboard = () => {
                       </div>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          app.status === "selected"
-                            ? "bg-purple-100 text-purple-700"
-                            : app.status === "shortlisted"
-                              ? "bg-green-100 text-green-700"
-                              : app.status === "rejected"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-blue-100 text-blue-700"
+                          app.status?.toLowerCase() === "selected" ? "bg-purple-100 text-purple-700"
+  : app.status?.toLowerCase() === "shortlisted" ? "bg-green-100 text-green-700"
+  : app.status?.toLowerCase() === "rejected" ? "bg-red-100 text-red-700"
+  : "bg-blue-100 text-blue-700"
                         }`}
                       >
                         {app.status.charAt(0).toUpperCase() +
-                          app.status.slice(1)}
+                          app.status.slice(1).toLowerCase()}
                       </span>
                     </div>
                   ))}

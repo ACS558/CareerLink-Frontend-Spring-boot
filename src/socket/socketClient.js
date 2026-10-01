@@ -63,8 +63,8 @@ class SocketClient {
 
     if (this.shownNotifications.has(notificationId)) return;
 
-    const notificationAge = Date.now() - new Date(notification.createdAt).getTime();
-    if (notificationAge >= 10000) return;
+    // const notificationAge = Date.now() - new Date(notification.createdAt).getTime();
+    // if (notificationAge >= 10000) return;
 
     this.shownNotifications.add(notificationId);
 

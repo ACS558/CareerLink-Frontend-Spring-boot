@@ -20,6 +20,7 @@ const CreatePostModal = ({
   const [isJobPost, setIsJobPost] = useState(false);
   const [linkedJobId, setLinkedJobId] = useState("");
   const [myJobs, setMyJobs] = useState([]);
+  const [allJobs, setAllJobs] = useState([]);
 
   useEffect(() => {
     if (editPost) {
@@ -51,7 +52,7 @@ const CreatePostModal = ({
     // 3. Fetch for admins / superadmins using your admin service
     if (user.role === "admin" || user.role === "superadmin") {
       adminAPI.getAllJobs()
-        .then((res) => setMyJobs(res.data.data))
+        .then((res) => setAllJobs(res.data.data))
         .catch((err) => console.error("Admin fetch failed:", err));
     }
   }
@@ -268,7 +269,7 @@ const CreatePostModal = ({
 
 
                     {/* Link to a Job Posting (recruiters only) */}
-          {(user?.role === "recruiter" || user?.role === "admin" || user?.role === "superadmin") && myJobs.length > 0  && (
+          {user?.role === "recruiter" && myJobs.length > 0  && (
             <div className="mb-4">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <input
@@ -297,6 +298,39 @@ const CreatePostModal = ({
               )}
             </div>
           )}
+
+          {/* ADMIN & SUPERADMIN VERSION */}
+{(user?.role === "admin" || user?.role === "superadmin") && allJobs.length > 0 && (
+  <div className="mb-4">
+    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+      <input
+        type="checkbox"
+        checked={isJobPost}
+        onChange={(e) => {
+          setIsJobPost(e.target.checked);
+          if (!e.target.checked) setLinkedJobId("");
+        }}
+      />
+      {/* Polished text specifically for administrators */}
+      Link this post to a platform job posting
+    </label>
+    {isJobPost && (
+      <select
+        value={linkedJobId}
+        onChange={(e) => setLinkedJobId(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      >
+        <option value="">Select a job posting...</option>
+        {allJobs.map((job) => (
+          <option key={job.id} value={job.id}>
+            {job.title} — {job.location}
+          </option>
+        ))}
+      </select>
+    )}
+  </div>
+)}
+
 
           {/* Image Previews */}
           {imagePreviews.length > 0 && (
