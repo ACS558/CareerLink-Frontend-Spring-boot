@@ -59,12 +59,12 @@ const CreatePostModal = ({
 
     // 3. Fetch for admins / superadmins using your admin service
     if (user.role === "admin" || user.role === "superadmin") {
-        axios.get("/api/jobs") 
+        axios.get("/api/admin/jobs") 
           .then((res) => {
             // Safely extract from your ApiResponse structure
             const data = res.data?.data || res.data;
             
-            // 💡 FORCE check: If it's not a true array, default to empty list [] to prevent .map() crash
+            //FORCE check: If it's not a true array, default to empty list [] to prevent .map() crash
             setAllJobs(Array.isArray(data) ? data : []);
           })
           .catch((err) => {
