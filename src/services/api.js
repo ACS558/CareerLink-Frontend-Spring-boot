@@ -125,7 +125,7 @@ export const adminAPI = {
   adminUpdateApplicationStatus: (applicationId, data) =>
     api.put(`/admin/applications/${applicationId}/status`, data),
    exportJobApplications: (jobId, status) =>
-    api.get(`/jobs/${jobId}/export`, { params: { status }, responseType: "blob" }),
+    api.get(`/admin/jobs/${jobId}/export`, { params: { status }, responseType: "blob" }),
   bulkUpdateApplications: (data) => api.patch("/admin/applications/bulk-update", data),
 
   createAdmin: (data) => api.post("/admin/create", data), // path differs from original /admin/admins
