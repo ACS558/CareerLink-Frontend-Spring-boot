@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { feedAPI, jobAPI, adminAPI } from "../../services/api"; // was default import from feedAPI.js (now merged into api.js)
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
-import axios from "axios";
 
 const CreatePostModal = ({
   isOpen,
@@ -59,19 +58,16 @@ const CreatePostModal = ({
 
     // 3. Fetch for admins / superadmins using your admin service
     if (user.role === "admin" || user.role === "superadmin") {
-        axios.get("/api/admin/jobs") 
-          .then((res) => {
-            // Safely extract from your ApiResponse structure
-            const data = res.data?.data || res.data;
-            
-            //FORCE check: If it's not a true array, default to empty list [] to prevent .map() crash
-            setAllJobs(Array.isArray(data) ? data : []);
-          })
-          .catch((err) => {
-            console.error("Admin fetch failed:", err);
-            setAllJobs([]); // Fallback to safe empty array on network failure
-          });
-      }
+    adminAPI.getAllJobs()
+      .then((res) => {
+        const data = res.data?.data || res.data;
+        setAllJobs(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.error("Admin fetch failed:", err);
+        setAllJobs([]);
+      });
+}
   }
 }, [isOpen, user]);
 
