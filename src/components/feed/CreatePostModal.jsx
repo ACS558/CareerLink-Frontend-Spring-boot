@@ -45,21 +45,33 @@ const CreatePostModal = ({
     
     // 2. Fetch for recruiters
     if (user.role === "recruiter") {
-      jobAPI.getMyJobs()
-        .then((res) => setMyJobs(res.data.data))
-        .catch((err) => console.error("Recruiter fetch failed:", err));
-    }
+        jobAPI.getMyJobs()
+          .then((res) => {
+            // Safely extract from your ApiResponse structure
+            const data = res.data?.data || res.data;
+            setMyJobs(Array.isArray(data) ? data : []);
+          })
+          .catch((err) => {
+            console.error("Recruiter fetch failed:", err);
+            setMyJobs([]);
+          });
+      }
 
     // 3. Fetch for admins / superadmins using your admin service
     if (user.role === "admin" || user.role === "superadmin") {
-     axios.get("/api/admin/jobs") 
+        axios.get("/api/jobs") 
           .then((res) => {
-            // Extracts your custom standard backend wrapper array structure safely
-            const jobsData = res.data?.data ? res.data.data : res.data;
-            setAllJobs(jobsData);
+            // Safely extract from your ApiResponse structure
+            const data = res.data?.data || res.data;
+            
+            // 💡 FORCE check: If it's not a true array, default to empty list [] to prevent .map() crash
+            setAllJobs(Array.isArray(data) ? data : []);
           })
-          .catch((err) => console.error("Admin fetch failed:", err));
-    }
+          .catch((err) => {
+            console.error("Admin fetch failed:", err);
+            setAllJobs([]); // Fallback to safe empty array on network failure
+          });
+      }
   }
 }, [isOpen, user]);
 
