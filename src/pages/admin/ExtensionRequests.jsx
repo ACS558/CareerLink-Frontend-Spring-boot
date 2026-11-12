@@ -530,7 +530,7 @@ const ExtensionRequests = () => {
               <p className="text-sm text-gray-500 mt-2">
                 New expiry date will be:{" "}
                 {new Date(
-                  new Date(reviewModal.expiryDate).getTime() +
+                  Math.max(Date.now(), new Date(reviewModal.expiryDate).getTime()) +
                     extensionDays * 24 * 60 * 60 * 1000,
                 ).toLocaleDateString()}
               </p>
