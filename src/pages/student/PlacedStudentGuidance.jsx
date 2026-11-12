@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { studentAPI } from "../../services/api";
 import toast from "react-hot-toast";
+import ExtensionRequestModal from "../../components/common/ExtensionRequestModal";
 
-const PlacedStudentGuidance = ({ daysLeft, student }) => {
+const PlacedStudentGuidance = ({ student }) => {
   const [isExporting, setIsExporting] = useState(false);
+  const [showExtensionModal, setShowExtensionModal] = useState(false);
   const placements =
     student.placements?.length > 0
       ? student.placements
@@ -23,7 +25,9 @@ const PlacedStudentGuidance = ({ daysLeft, student }) => {
   const sortedPlacements = [...placements].sort((a, b) => {
     if (a.isPrimary) return -1;
     if (b.isPrimary) return 1;
-    return (b.package || 0) - (a.package || 0);
+        return (
+      (b.packageOffered || b.package || 0) - (a.packageOffered || a.package || 0)
+    );
   });
   const handleExportData = async () => {
     setIsExporting(true);
@@ -275,13 +279,20 @@ const PlacedStudentGuidance = ({ daysLeft, student }) => {
               />
             </svg>
           </div>
-          <div>
+                    <div>
             <p className="font-semibold text-blue-900 text-lg">
-              Account expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+              Your account has expired
             </p>
             <p className="text-sm text-blue-700 mt-1">
-              Download your placement journey data before your account closes
+              Congratulations on your placement! Need more time on the
+              platform? Request an extension.
             </p>
+            <button
+              onClick={() => setShowExtensionModal(true)}
+              className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold text-sm"
+            >
+              Request Extension
+            </button>
           </div>
         </div>
       </div>
@@ -505,6 +516,10 @@ const PlacedStudentGuidance = ({ daysLeft, student }) => {
           🚀
         </p>
       </div>
+
+            {showExtensionModal && (
+        <ExtensionRequestModal onClose={() => setShowExtensionModal(false)} />
+      )}
 
       <style jsx>{`
         @keyframes bounce-slow {
