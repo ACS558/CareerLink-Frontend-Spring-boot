@@ -1,36 +1,12 @@
 import { useState } from "react";
-import { studentAPI } from "../../services/api";
-import toast from "react-hot-toast";
 import CareerPathGuideModal from "./CareerPathGuideModal";
+import ExtensionRequestModal from "../../components/common/ExtensionRequestModal";
 
-const UnplacedStudentGuidance = ({ daysLeft }) => {
+const UnplacedStudentGuidance = () => {
   const [showModal, setShowModal] = useState(false);
-  const [reason, setReason] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const [showExtensionModal, setShowExtensionModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [selectedPath, setSelectedPath] = useState(null);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!reason.trim()) {
-      toast.error("Please provide a reason");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await studentAPI.requestExtension(reason);
-      toast.success("Extension request submitted!");
-      setShowModal(false);
-      setReason("");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to submit");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const careerPaths = [
     {
@@ -113,12 +89,13 @@ const UnplacedStudentGuidance = ({ daysLeft }) => {
                 />
               </svg>
             </div>
-            <div>
+                        <div>
               <p className="font-bold text-orange-900 text-lg">
-                Account expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+                Your account has expired
               </p>
               <p className="text-sm text-orange-700 mt-1">
-                Download your data and explore career options below
+                Explore your career options below, or request an extension if
+                you need more time on the platform
               </p>
             </div>
           </div>
@@ -206,7 +183,7 @@ const UnplacedStudentGuidance = ({ daysLeft }) => {
       <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
           <span className="text-2xl mr-2">📥</span>
-          Before Your Account Expires
+          Your Data
         </h3>
         <div className="grid md:grid-cols-2 gap-4">
           <button className="flex items-center space-x-3 px-5 py-4 bg-white hover:bg-blue-50 rounded-xl transition border border-gray-200 hover:border-blue-300 group">
@@ -254,68 +231,7 @@ const UnplacedStudentGuidance = ({ daysLeft }) => {
       </div>
 
       {/* Extension Modal - Enhanced */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform animate-slideUp">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-blue-100 p-3 rounded-xl">
-                <svg
-                  className="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">
-                Request Account Extension
-              </h3>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  Reason for Extension
-                </label>
-                <textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                  rows="4"
-                  placeholder="E.g., Preparing for GATE exam, Enrolled in certification course, Actively applying off-campus..."
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Be specific about why you need more time
-                </p>
-              </div>
-
-              <div className="flex space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-5 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition font-semibold text-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                >
-                  {loading ? "Submitting..." : "Submit Request"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            {showModal && <ExtensionRequestModal onClose={() => setShowModal(false)} />}
       {/* ✅ Career Path Guide Modal */}
       {showGuideModal && (
         <CareerPathGuideModal
