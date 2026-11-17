@@ -78,7 +78,7 @@ const AcademicYearSection = ({ year, label, count, isOpen, onToggle, filters, re
                 <table className="w-full">
                   <thead className="bg-white border-b">
                     <tr>
-                      {["#", "Reg No", "Name", "Branch", "CGPA", "Skills", "Placement", "Account", "Expiry", "Action"].map(
+                      {["#", "Reg No", "Name", "Branch", "CGPA", "Placement", "Account", "Expiry", "Action"].map(
                         (h) => (
                           <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                             {h}
@@ -116,18 +116,6 @@ const AcademicYearSection = ({ year, label, count, isOpen, onToggle, filters, re
                             <span className={`text-sm font-bold ${getCGPAColor(student.cgpa)}`}>
                               {student.cgpa ?? "—"}
                             </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex flex-wrap gap-1">
-                              {student.skills?.slice(0, 3).map((skill, i) => (
-                                <span key={i} className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">
-                                  {skill}
-                                </span>
-                              ))}
-                              {student.skills?.length > 3 && (
-                                <span className="text-xs text-gray-400">+{student.skills.length - 3}</span>
-                              )}
-                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <span
