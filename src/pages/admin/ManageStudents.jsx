@@ -99,7 +99,7 @@ const ManageStudents = () => {
       <Navbar />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-8">
+        <main className="flex-1 min-w-0 p-8">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Manage Students 👥</h1>
             <p className="text-gray-600">View, search, and filter students grouped by academic year</p>
