@@ -84,7 +84,7 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="w-64 bg-white shadow-md h-screen overflow-y-auto sticky top-0">
+    <aside className="w-64 shrink-0 bg-white shadow-md sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
       <div className="p-4">
         <nav className="space-y-1">
           {menuItems.map((item) => (
