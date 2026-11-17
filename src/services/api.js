@@ -139,6 +139,7 @@ export const adminAPI = {
     return api.post(`/admin/referrals/${id}/${endpoint}`);
   },
     extendStudent: (id, days) => api.post(`/admin/students/${id}/extend`, { days }),
+      getStudentAcademicYears: (params) => api.get("/admin/students/academic-years", { params }),
 };
 
 // ============ ALUMNI ============
