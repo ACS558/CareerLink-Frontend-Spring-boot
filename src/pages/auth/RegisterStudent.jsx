@@ -48,10 +48,13 @@ const RegisterStudent = () => {
       toast.success("Registration successful! Please login.");
       navigate("/login");
     } catch (error) {
-      console.error("Registration error:", error);
-    } finally {
-      setLoading(false);
-    }
+  console.error("Registration error:", error);
+  if (error.response?.data?.message?.includes("verify your email")) {
+    setEmailVerified(false);
+  }
+} finally {
+  setLoading(false);
+}
   };
 
   return (
