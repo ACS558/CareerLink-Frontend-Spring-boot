@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authAPI } from "../../services/api";
 import toast from "react-hot-toast";
+import EmailVerification from "../../components/auth/EmailVerification";
 
 const RegisterAlumni = () => {
   const navigate = useNavigate();
+  const [emailVerified, setEmailVerified] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,6 +30,8 @@ const RegisterAlumni = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!emailVerified) { toast.error("Please verify your email first"); return; }
+
 
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
@@ -71,6 +75,19 @@ const RegisterAlumni = () => {
 
         <div className="bg-white rounded-xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
+
+                  <EmailVerification
+              email={formData.email}
+              onEmailChange={handleChange}
+              verified={emailVerified}
+              onVerifiedChange={setEmailVerified}
+              placeholder="alumni@gmail.com"
+            />
+            
+              <fieldset
+              disabled={!emailVerified}
+              className="space-y-5 min-w-0 disabled:opacity-50"
+            >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="label">Full Name *</label>
@@ -217,6 +234,7 @@ const RegisterAlumni = () => {
             >
               {loading ? "Registering..." : "Register as Alumni"}
             </button>
+            </fieldset>
           </form>
 
           <div className="mt-6 text-center">

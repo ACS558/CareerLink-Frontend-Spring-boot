@@ -66,6 +66,9 @@ export const authAPI = {
 
   forgotPassword: (identifier) => api.post("/auth/forgot-password", { identifier }),
 resetPassword: (data) => api.post("/auth/reset-password", data),
+
+sendRegisterOtp: (email) => api.post("/auth/register/send-otp", { email }),
+verifyRegisterOtp: (email, otp) => api.post("/auth/register/verify-otp", { email, otp }),
 };
 
 // ============ STUDENT ============
