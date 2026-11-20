@@ -32,7 +32,8 @@ api.interceptors.response.use(
 
     const { status } = error.response;
     const requestUrl = error.config?.url || "";
-    const isAuthRequest = requestUrl.includes("/auth/login") || requestUrl.includes("/auth/register");
+    //const isAuthRequest = requestUrl.includes("/auth/login") || requestUrl.includes("/auth/register");
+    const isAuthRequest = requestUrl.includes("/auth/");
 
     if (status === 401 && !isAuthRequest) {
       if (!isRedirectingToLogin) {
@@ -62,6 +63,9 @@ export const authAPI = {
   // Admin self-registration is disabled by design (Super Admin creates admins).
   registerAdmin: () =>
     Promise.reject({ response: { data: { message: "Admin self-registration is disabled. Contact a Super Admin." } } }),
+
+  forgotPassword: (identifier) => api.post("/auth/forgot-password", { identifier }),
+resetPassword: (data) => api.post("/auth/reset-password", data),
 };
 
 // ============ STUDENT ============

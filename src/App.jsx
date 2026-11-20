@@ -11,6 +11,8 @@ import RegisterStudent from "./pages/auth/RegisterStudent";
 import RegisterRecruiter from "./pages/auth/RegisterRecruiter";
 //import RegisterAdmin from "./pages/auth/RegisterAdmin";
 import RegisterAlumni from "./pages/auth/RegisterAlumni";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 // Student Pages
 import StudentDashboard from "./pages/student/StudentDashboard";
@@ -134,6 +136,8 @@ const App = () => {
             )
           }
         />
+        <Route path="/forgot-password" element={!user ? <ForgotPassword /> : <Navigate to={`/${user.role}/dashboard`} />} />
+<Route path="/reset-password" element={!user ? <ResetPassword /> : <Navigate to={`/${user.role}/dashboard`} />} />
 
         {/* Student Routes */}
         <Route

@@ -1,4 +1,187 @@
 ﻿
+===== src\components\admin\AcademicYearSection.jsx =====
+import { useEffect, useState } from "react";
+import { adminAPI } from "../../services/api";
+import { getStatusBadgeColor, getCGPAColor } from "../../utils/helpers";
+
+const PAGE_SIZE = 10;
+
+const AcademicYearSection = ({ year, label, count, isOpen, onToggle, filters, refreshKey, onExtend }) => {
+  const [students, setStudents] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch only while the banner is open; collapsed banners cost nothing.
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const params = { page: page - 1, size: PAGE_SIZE, academicYear: year };
+        if (filters.search) params.search = filters.search;
+        if (filters.branch) params.branch = filters.branch;
+        if (filters.placementStatus) params.placementStatus = filters.placementStatus;
+
+        const res = await adminAPI.getAllStudents(params);
+        if (cancelled) return;
+        const data = res.data.data;
+        setStudents(data.content);
+        setTotalPages(Math.max(data.totalPages, 1));
+      } catch (error) {
+        console.error("Fetch students error:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, page, year, filters, refreshKey]);
+
+  return (
+    <section className="bg-white rounded-lg shadow-md overflow-hidden">
+      <button
+        type="button"
+        onClick={() => onToggle(year)}
+        aria-expanded={isOpen}
+        className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition text-left"
+      >
+        <div className="flex items-center space-x-3">
+          <span className="text-2xl">ðŸŽ“</span>
+          <h2 className="text-lg font-bold text-gray-900">{label}</h2>
+          <span className="text-xs font-semibold bg-primary-100 text-primary-700 px-3 py-1 rounded-full">
+            {count} student{count !== 1 ? "s" : ""}
+          </span>
+        </div>
+        <svg
+          className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="border-t border-gray-200">
+          {loading && students.length === 0 ? (
+            <div className="flex justify-center py-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-white border-b">
+                    <tr>
+                      {["#", "Reg No", "Name", "Branch", "CGPA", "Placement", "Account", "Expiry", "Action"].map(
+                        (h) => (
+                          <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                            {h}
+                          </th>
+                        ),
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {students.map((student, index) => {
+                      const fullName = [student.firstName, student.lastName].filter(Boolean).join(" ");
+                      return (
+                        <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 text-sm text-gray-500">{(page - 1) * PAGE_SIZE + index + 1}</td>
+                          <td className="px-6 py-4">
+                            <span className="text-sm font-bold text-primary-600">{student.registrationNumber}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-bold text-primary-600">
+                                  {(student.firstName || student.registrationNumber || "?")[0]}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">
+                                  {fullName || <span className="italic text-gray-400">Profile incomplete</span>}
+                                </p>
+                                <p className="text-xs text-gray-400">{student.email}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">{student.branch || "â€”"}</td>
+                          <td className="px-6 py-4">
+                            <span className={`text-sm font-bold ${getCGPAColor(student.cgpa)}`}>
+                              {student.cgpa ?? "â€”"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.placementStatus)}`}
+                            >
+                              {student.placementStatus?.toLowerCase() === "placed" ? "Placed" : "Unplaced"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.accountStatus)}`}
+                            >
+                              {student.accountStatus?.replace(/_/g, " ")}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {student.expiryDate ? new Date(student.expiryDate).toLocaleDateString() : "â€”"}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => onExtend(student)}
+                              className="text-primary-600 hover:underline text-sm font-medium"
+                            >
+                              Extend
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-3 border-t bg-gray-50">
+                  <button
+                    onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                    disabled={page === 1}
+                    className="px-4 py-1 text-sm border rounded-lg bg-white disabled:opacity-40"
+                  >
+                    â† Previous
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                    disabled={page === totalPages}
+                    className="px-4 py-1 text-sm border rounded-lg bg-white disabled:opacity-40"
+                  >
+                    Next â†’
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </section>
+  );
+};
+
+export default AcademicYearSection;
+
 ===== src\components\common\ActivityFeed.jsx =====
 import { useState, useEffect } from "react";
 import { notificationAPI } from "../../services/api";
@@ -135,6 +318,74 @@ const ActivityFeed = () => {
 
 export default ActivityFeed;
 
+
+===== src\components\common\ExtensionRequestModal.jsx =====
+import { useState } from "react";
+import { studentAPI } from "../../services/api";
+import toast from "react-hot-toast";
+
+const ExtensionRequestModal = ({ onClose }) => {
+  const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!reason.trim()) {
+      toast.error("Please enter a reason");
+      return;
+    }
+    setLoading(true);
+    try {
+      await studentAPI.requestExtension(reason.trim());
+      toast.success("Extension request submitted! An admin will review it.");
+      onClose();
+    } catch (error) {
+      // the api.js interceptor already shows the server's error message
+      console.error("Extension request error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Account Extension</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Tell the placement cell why you need more time on the platform.
+        </p>
+        <form onSubmit={handleSubmit}>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={4}
+            className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 mb-6 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="e.g. I need to download my data / still in interview process..."
+          />
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? "Submitting..." : "Submit Request"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default ExtensionRequestModal;
 
 ===== src\components\common\Navbar.jsx =====
 import { Link } from "react-router-dom";
@@ -947,7 +1198,7 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="w-64 bg-white shadow-md h-screen overflow-y-auto sticky top-0">
+    <aside className="w-64 shrink-0 bg-white shadow-md sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
       <div className="p-4">
         <nav className="space-y-1">
           {menuItems.map((item) => (
@@ -975,7 +1226,7 @@ export default Sidebar;
 
 ===== src\components\feed\CreatePostModal.jsx =====
 import { useState, useEffect } from "react";
-import { feedAPI, jobAPI } from "../../services/api"; // was default import from feedAPI.js (now merged into api.js)
+import { feedAPI, jobAPI, adminAPI } from "../../services/api"; // was default import from feedAPI.js (now merged into api.js)
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 
@@ -996,6 +1247,7 @@ const CreatePostModal = ({
   const [isJobPost, setIsJobPost] = useState(false);
   const [linkedJobId, setLinkedJobId] = useState("");
   const [myJobs, setMyJobs] = useState([]);
+  const [allJobs, setAllJobs] = useState([]);
 
   useEffect(() => {
     if (editPost) {
@@ -1014,10 +1266,38 @@ const CreatePostModal = ({
 
   //spring boot backend: fetch the user's jobs when the modal opens
   useEffect(() => {
-    if (isOpen && user?.role === "recruiter") {
-      jobAPI.getMyJobs().then((res) => setMyJobs(res.data.data)).catch(() => {});
-    }
-  }, [isOpen, user]);
+  // 1. Only run API requests if the modal/dropdown is open
+  if (isOpen && user?.role) {
+    
+    // 2. Fetch for recruiters
+    if (user.role === "recruiter") {
+        jobAPI.getMyJobs()
+          .then((res) => {
+            // Safely extract from your ApiResponse structure
+            const data = res.data?.data || res.data;
+            setMyJobs(Array.isArray(data) ? data : []);
+          })
+          .catch((err) => {
+            console.error("Recruiter fetch failed:", err);
+            setMyJobs([]);
+          });
+      }
+
+    // 3. Fetch for admins / superadmins using your admin service
+    if (user.role === "admin" || user.role === "superadmin") {
+    adminAPI.getAllJobs()
+      .then((res) => {
+        const data = res.data?.data || res.data;
+        setAllJobs(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.error("Admin fetch failed:", err);
+        setAllJobs([]);
+      });
+}
+  }
+}, [isOpen, user]);
+
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -1228,9 +1508,8 @@ const CreatePostModal = ({
           </div>
 
 
-          //spring boot backend: Job post linking section for recruiters
                     {/* Link to a Job Posting (recruiters only) */}
-          {user?.role === "recruiter" && myJobs.length > 0 && (
+          {user?.role === "recruiter" && myJobs.length > 0  && (
             <div className="mb-4">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <input
@@ -1259,6 +1538,39 @@ const CreatePostModal = ({
               )}
             </div>
           )}
+
+          {/* ADMIN & SUPERADMIN VERSION */}
+{(user?.role === "admin" || user?.role === "superadmin") && allJobs.length > 0 && (
+  <div className="mb-4">
+    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+      <input
+        type="checkbox"
+        checked={isJobPost}
+        onChange={(e) => {
+          setIsJobPost(e.target.checked);
+          if (!e.target.checked) setLinkedJobId("");
+        }}
+      />
+      {/* Polished text specifically for administrators */}
+      Link this post to a platform job posting
+    </label>
+    {isJobPost && (
+      <select
+        value={linkedJobId}
+        onChange={(e) => setLinkedJobId(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      >
+        <option value="">Select a job posting...</option>
+        {allJobs.map((job) => (
+          <option key={job.id} value={job.id}>
+            {job.title} â€” {job.location}
+          </option>
+        ))}
+      </select>
+    )}
+  </div>
+)}
+
 
           {/* Image Previews */}
           {imagePreviews.length > 0 && (
@@ -2686,7 +2998,7 @@ export const useNotifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const soundRef = useRef(new Audio("/sounds/notification.mp3"));
+  //const soundRef = useRef(new Audio("/sounds/notification.mp3"));
   const isInitialLoad = useRef(true);
   const shownNotificationsRef = useRef(new Set());
 
@@ -2718,27 +3030,27 @@ export const useNotifications = () => {
         return;
       }
 
-      const notificationAge = Date.now() - new Date(data.notification.createdAt).getTime();
-      const isReallyNew = notificationAge < 10000;
+      // const notificationAge = Date.now() - new Date(data.notification.createdAt).getTime();
+      // const isReallyNew = notificationAge < 10000;
 
       shownNotificationsRef.current.add(notificationId);
 
       setUnreadCount(data.unreadCount);
       setNotifications((prev) => [data.notification, ...prev]);
 
-      if (!isInitialLoad.current && isReallyNew) {
-        soundRef.current.currentTime = 0;
-        soundRef.current.play().catch(() => {
-          console.log("Sound blocked by browser");
-        });
+      // if (!isInitialLoad.current && isReallyNew) {
+      //   soundRef.current.currentTime = 0;
+      //   soundRef.current.play().catch(() => {
+      //     console.log("Sound blocked by browser");
+      //   });
 
-        if (Notification.permission === "granted") {
-          new Notification(data.notification.title || "CareerLink", {
-            body: data.notification.message,
-            icon: "/logo.png",
-          });
-        }
-      }
+      //   if (Notification.permission === "granted") {
+      //     new Notification(data.notification.title || "CareerLink", {
+      //       body: data.notification.message,
+      //       icon: "/logo.png",
+      //     });
+      //   }
+      // }
     };
 
     console.log("âœ… Attaching notification listener");
@@ -6579,7 +6891,7 @@ const ExtensionRequests = () => {
               <p className="text-sm text-gray-500 mt-2">
                 New expiry date will be:{" "}
                 {new Date(
-                  new Date(reviewModal.expiryDate).getTime() +
+                  Math.max(Date.now(), new Date(reviewModal.expiryDate).getTime()) +
                     extensionDays * 24 * 60 * 60 * 1000,
                 ).toLocaleDateString()}
               </p>
@@ -7556,63 +7868,91 @@ export default ManageReferrals;
 
 
 ===== src\pages\admin\ManageStudents.jsx =====
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { adminAPI } from "../../services/api";
-import { getStatusBadgeColor, getCGPAColor } from "../../utils/helpers";
 import Navbar from "../../components/common/Navbar";
 import Sidebar from "../../components/common/Sidebar";
+import AcademicYearSection from "../../components/admin/AcademicYearSection";
+
+const BRANCHES = ["CSE", "IT", "ECE", "EEE", "MECH", "CIVIL"];
 
 const ManageStudents = () => {
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  // what the admin is typing/selecting
+  const [searchInput, setSearchInput] = useState("");
   const [branch, setBranch] = useState("");
   const [placementStatus, setPlacementStatus] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalStudents, setTotalStudents] = useState(0);
-    const [showExtendModal, setShowExtendModal] = useState(false);
+  // what is actually applied (search is debounced)
+  const [filters, setFilters] = useState({ search: "", branch: "", placementStatus: "" });
+
+  const [years, setYears] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [openYears, setOpenYears] = useState(new Set());
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const [studentToExtend, setStudentToExtend] = useState(null);
   const [extendDays, setExtendDays] = useState(30);
   const [extending, setExtending] = useState(false);
 
+  // Debounce the filter inputs so we don't query on every keystroke.
   useEffect(() => {
-    fetchStudents();
-  }, [search, branch, placementStatus, currentPage]);
+    const timer = setTimeout(() => {
+      const next = { search: searchInput.trim(), branch, placementStatus };
+      setFilters((prev) =>
+        prev.search === next.search && prev.branch === next.branch && prev.placementStatus === next.placementStatus
+          ? prev
+          : next,
+      );
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput, branch, placementStatus]);
 
-  const fetchStudents = async () => {
-    setLoading(true);
-    try {
-      //const params = { page: currentPage, limit: 10 };
-       const params = { page: currentPage - 1, size: 10 };
-      if (search) params.search = search;
-      if (branch) params.branch = branch;
-      if (placementStatus) params.placementStatus = placementStatus;
-      const res = await adminAPI.getAllStudents(params);
-      const page = res.data.data; // Spring's Page<T> wrapper
-      // setStudents(res.data.students);
-      // setTotalPages(res.data.totalPages);
-      // setTotalStudents(res.data.totalStudents);
-      setStudents(page.content); 
-      setTotalPages(page.totalPages); 
-      setTotalStudents(page.totalElements); 
-    } catch (error) {
-      console.error("Fetch error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Load the academic-year banners (with counts) whenever filters change.
+  useEffect(() => {
+    let cancelled = false;
+    const loadYears = async () => {
+      setLoading(true);
+      try {
+        const params = {};
+        if (filters.search) params.search = filters.search;
+        if (filters.branch) params.branch = filters.branch;
+        if (filters.placementStatus) params.placementStatus = filters.placementStatus;
+        const res = await adminAPI.getStudentAcademicYears(params);
+        if (!cancelled) setYears(res.data.data);
+      } catch (error) {
+        console.error("Fetch academic years error:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    loadYears();
+    return () => {
+      cancelled = true;
+    };
+  }, [filters]);
 
-    const handleExtend = async () => {
+  const toggleYear = useCallback((year) => {
+    setOpenYears((prev) => {
+      const next = new Set(prev);
+      if (next.has(year)) next.delete(year);
+      else next.add(year);
+      return next;
+    });
+  }, []);
+
+  const handleExtend = async () => {
     if (!studentToExtend) return;
+    if (!extendDays || Number(extendDays) < 1) {
+      toast.error("Enter a valid number of days");
+      return;
+    }
     setExtending(true);
     try {
       await adminAPI.extendStudent(studentToExtend.id, Number(extendDays));
       toast.success(`Account extended by ${extendDays} days`);
-      setShowExtendModal(false);
       setStudentToExtend(null);
       setExtendDays(30);
-      fetchStudents();
+      setRefreshKey((k) => k + 1); // open banners reload in place
     } catch (error) {
       console.error("Extend error:", error);
       toast.error(error.response?.data?.message || "Failed to extend account");
@@ -7621,291 +7961,104 @@ const ManageStudents = () => {
     }
   };
 
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setCurrentPage(1);
-  };
-  const handleBranchChange = (e) => {
-    setBranch(e.target.value);
-    setCurrentPage(1);
-  };
-  const handleStatusChange = (e) => {
-    setPlacementStatus(e.target.value);
-    setCurrentPage(1);
-  };
-
-  // Pagination helper - show limited page numbers
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisible = 5;
-    let start = Math.max(1, currentPage - 2);
-    let end = Math.min(totalPages, start + maxVisible - 1);
-    if (end - start < maxVisible - 1) {
-      start = Math.max(1, end - maxVisible + 1);
-    }
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-    return pages;
-  };
+  const totalStudents = years.reduce((sum, y) => sum + y.studentCount, 0);
+  const filterKey = `${filters.search}|${filters.branch}|${filters.placementStatus}`;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
-      {/* Full width Navbar */}
-      <div className="flex-shrink-0">
-        <Navbar />
-      </div>
-
-      {/* Sidebar + Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <div className="w-64 flex-shrink-0 overflow-y-auto bg-white shadow-md">
-          <Sidebar />
-        </div>
-
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-8">
+    <div className="min-h-screen bg-gray-100">
+      <Navbar />
+      <div className="flex">
+        <Sidebar />
+        <main className="flex-1 min-w-0 p-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Manage Students ðŸ‘¥
-            </h1>
-            <p className="text-gray-600">
-              View, search, and filter all registered students
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">Manage Students ðŸ‘¥</h1>
+            <p className="text-gray-600">View, search, and filter students grouped by academic year</p>
           </div>
 
-          {/* Filters Row */}
-          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-2">
-                <input
-                  type="text"
-                  className="input-field"
-                  placeholder="ðŸ” Search by name or registration number..."
-                  value={search}
-                  onChange={handleSearchChange}
-                />
-              </div>
-              <div>
-                <select
-                  className="input-field"
-                  value={branch}
-                  onChange={handleBranchChange}
-                >
-                  <option value="">All Branches</option>
-                  <option value="CSE">CSE</option>
-                  <option value="IT">IT</option>
-                  <option value="ECE">ECE</option>
-                  <option value="EEE">EEE</option>
-                  <option value="Mechanical">Mechanical</option>
-                  <option value="Civil">Civil</option>
-                </select>
-              </div>
-              <div>
-                <select
-                  className="input-field"
-                  value={placementStatus}
-                  onChange={handleStatusChange}
-                >
-                  <option value="">All Status</option>
-                  <option value="placed">Placed</option>
-                  <option value="unplaced">Unplaced</option>
-                </select>
-              </div>
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="input-field"
+                placeholder="ðŸ” Search by name or registration number..."
+              />
+              <select value={branch} onChange={(e) => setBranch(e.target.value)} className="input-field">
+                <option value="">All Branches</option>
+                {BRANCHES.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={placementStatus}
+                onChange={(e) => setPlacementStatus(e.target.value)}
+                className="input-field"
+              >
+                <option value="">All Status</option>
+                <option value="placed">Placed</option>
+                <option value="unplaced">Unplaced</option>
+              </select>
             </div>
           </div>
 
-          {/* Results Count */}
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-gray-500">
-              Showing <span className="font-semibold">{students.length}</span>{" "}
-              of <span className="font-semibold">{totalStudents}</span> students
+            <p className="text-sm text-gray-600">
+              <span className="font-semibold">{totalStudents}</span> student{totalStudents !== 1 ? "s" : ""} across{" "}
+              <span className="font-semibold">{years.length}</span> academic year{years.length !== 1 ? "s" : ""}
             </p>
-            <p className="text-sm text-gray-500">
-              Page {currentPage} of {totalPages}
-            </p>
+            {years.length > 0 && (
+              <div className="space-x-4 text-sm">
+                <button
+                  onClick={() => setOpenYears(new Set(years.map((y) => y.academicYear)))}
+                  className="text-primary-600 hover:underline"
+                >
+                  Expand all
+                </button>
+                <button onClick={() => setOpenYears(new Set())} className="text-primary-600 hover:underline">
+                  Collapse all
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Students Table */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden w-full">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      #
-                    </th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Reg No
-                    </th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Branch
-                    </th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      CGPA
-                    </th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Skills
-                    </th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Account Status</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Expiry</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="7" className="text-center py-10">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-                      </td>
-                    </tr>
-                  ) : students.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan="7"
-                        className="text-center py-10 text-gray-400"
-                      >
-                        No students found
-                      </td>
-                    </tr>
-                  ) : (
-                    // students.map((student, index) => (
-                    //   <tr
-                    //     key={student._id}
-                    //     className="hover:bg-gray-50 transition-colors"
-                    //   >
-                    //     <td className="px-6 py-4 text-sm text-gray-500">
-                    //       {(currentPage - 1) * 10 + index + 1}
-                    //     </td>
-                    //     <td className="px-6 py-4">
-                    //       <span className="text-sm font-bold text-primary-600">
-                    //         {student.registrationNumber}
-                    //       </span>
-                    //     </td>
-                    //     <td className="px-6 py-4">
-                    //       <div className="flex items-center space-x-3">
-                    //         <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                    //           <span className="text-sm font-bold text-primary-600">
-                    //             {(student.personalInfo?.firstName || "?")[0]}
-                    //           </span>
-                    //         </div>
-                    //         <div>
-                    //           <p className="text-sm font-semibold text-gray-900">
-                    //             {student.personalInfo?.firstName}{" "}
-                    //             {student.personalInfo?.lastName}
-                    //           </p>
-                    //           <p className="text-xs text-gray-400">
-                    //             {student.userId?.email}
-                    //           </p>
-                    //         </div>
-                    //       </div>
-                    //     </td>
-                    //     <td className="px-6 py-4 text-sm text-gray-700">
-                    //       {student.academicInfo?.branch || "â€”"}
-                    //     </td>
-                    //     <td className="px-6 py-4">
-                    //       <span
-                    //         className={`text-sm font-bold ${getCGPAColor(student.academicInfo?.cgpa)}`}
-                    //       >
-                    //         {student.academicInfo?.cgpa || "â€”"}
-                    //       </span>
-                    //     </td>
-                    //     <td className="px-6 py-4">
-                    //       <div className="flex flex-wrap gap-1">
-                    //         {student.skills?.slice(0, 3).map((skill, i) => (
-                    //           <span
-                    //             key={i}
-                    //             className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded"
-                    //           >
-                    //             {skill}
-                    //           </span>
-                    //         ))}
-                    //         {student.skills?.length > 3 && (
-                    //           <span className="text-xs text-gray-400">
-                    //             +{student.skills.length - 3}
-                    //           </span>
-                    //         )}
-                    //       </div>
-                    //     </td>
-                    //     <td className="px-6 py-4">
-                    //       <span
-                    //         className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.placementStatus)}`}
-                    //       >
-                    //         {student.placementStatus === "placed"
-                    //           ? "Placed"
-                    //           : "Unplaced"}
-                    //       </span>
-                    //     </td>
-                    //   </tr>
-                    // ))
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
+            </div>
+          ) : years.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">No students found</div>
+          ) : (
+            <div className="space-y-4">
+              {years.map((y) => (
+                <AcademicYearSection
+                  key={`${y.academicYear}|${filterKey}`}
+                  year={y.academicYear}
+                  label={y.label}
+                  count={y.studentCount}
+                  isOpen={openYears.has(y.academicYear)}
+                  onToggle={toggleYear}
+                  filters={filters}
+                  refreshKey={refreshKey}
+                  onExtend={setStudentToExtend}
+                />
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
 
-                      students.map((student, index) => (
-                      <tr key={student.id} className="hover:bg-gray-50 transition-colors"> {/* was student._id */}
-                        <td className="px-6 py-4 text-sm text-gray-500">{(currentPage - 1) * 10 + index + 1}</td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm font-bold text-primary-600">{student.registrationNumber}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-bold text-primary-600">{(student.firstName || "?")[0]}</span>
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900">{student.firstName} {student.lastName}</p>
-                              <p className="text-xs text-gray-400">{student.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">{student.branch || "â€”"}</td>
-                        <td className="px-6 py-4">
-                          <span className={`text-sm font-bold ${getCGPAColor(student.cgpa)}`}>{student.cgpa || "â€”"}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            {student.skills?.slice(0, 3).map((skill, i) => (
-                              <span key={i} className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">{skill}</span>
-                            ))}
-                            {student.skills?.length > 3 && (
-                              <span className="text-xs text-gray-400">+{student.skills.length - 3}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.placementStatus)}`}>
-                            {student.placementStatus?.toLowerCase() === "placed" ? "Placed" : "Unplaced"}
-                          </span>
-                        </td>
-                                                <td className="px-6 py-4">
-                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.accountStatus)}`}>
-                            {student.accountStatus?.replace(/_/g, " ")}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {student.expiryDate ? new Date(student.expiryDate).toLocaleDateString() : "â€”"}
-                        </td>
-                        <td className="px-6 py-4">
-                          <button
-                            onClick={() => { setStudentToExtend(student); setShowExtendModal(true); }}
-                            className="text-primary-600 hover:underline text-sm font-medium"
-                          >
-                            Extend
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                  {showExtendModal && studentToExtend && (
+      {studentToExtend && (
         <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Extend Account</h2>
             <div className="mb-4 bg-gray-50 p-4 rounded-lg">
-              <p className="font-bold text-gray-900">{studentToExtend.firstName} {studentToExtend.lastName}</p>
+              <p className="font-bold text-gray-900">
+                {[studentToExtend.firstName, studentToExtend.lastName].filter(Boolean).join(" ") ||
+                  studentToExtend.registrationNumber}
+              </p>
               <p className="text-sm text-gray-600">{studentToExtend.registrationNumber}</p>
               <p className="text-sm text-gray-500 mt-1">
                 Current status: {studentToExtend.accountStatus?.replace(/_/g, " ")}
@@ -7921,7 +8074,7 @@ const ManageStudents = () => {
             />
             <div className="flex space-x-3">
               <button
-                onClick={() => { setShowExtendModal(false); setStudentToExtend(null); }}
+                onClick={() => setStudentToExtend(null)}
                 disabled={extending}
                 className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold disabled:opacity-50"
               >
@@ -7938,84 +8091,475 @@ const ManageStudents = () => {
           </div>
         </div>
       )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination - smart with limited page numbers */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-1 px-6 py-4 border-t flex-wrap">
-                {/* First page */}
-                {currentPage > 3 && (
-                  <>
-                    <button
-                      onClick={() => setCurrentPage(1)}
-                      className="px-3 py-1 border rounded-lg text-sm hover:bg-gray-50"
-                    >
-                      1
-                    </button>
-                    <span className="text-gray-400 text-sm">...</span>
-                  </>
-                )}
-
-                {/* Prev button */}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50"
-                >
-                  â† Prev
-                </button>
-
-                {/* Page numbers - only show 5 at a time */}
-                {getPageNumbers().map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1 rounded-lg text-sm ${
-                      currentPage === page
-                        ? "bg-primary-600 text-white"
-                        : "border hover:bg-gray-50"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-
-                {/* Next button */}
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50"
-                >
-                  Next â†’
-                </button>
-
-                {/* Last page */}
-                {currentPage < totalPages - 2 && (
-                  <>
-                    <span className="text-gray-400 text-sm">...</span>
-                    <button
-                      onClick={() => setCurrentPage(totalPages)}
-                      className="px-3 py-1 border rounded-lg text-sm hover:bg-gray-50"
-                    >
-                      {totalPages}
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-                  
-          </div>
-        </main>
-      </div>
     </div>
   );
 };
 
 export default ManageStudents;
+
+
+
+
+// import { useState, useEffect } from "react";
+// import { adminAPI } from "../../services/api";
+// import { getStatusBadgeColor, getCGPAColor } from "../../utils/helpers";
+// import Navbar from "../../components/common/Navbar";
+// import Sidebar from "../../components/common/Sidebar";
+
+// const ManageStudents = () => {
+//   const [students, setStudents] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [search, setSearch] = useState("");
+//   const [branch, setBranch] = useState("");
+//   const [placementStatus, setPlacementStatus] = useState("");
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const [totalPages, setTotalPages] = useState(1);
+//   const [totalStudents, setTotalStudents] = useState(0);
+//     const [showExtendModal, setShowExtendModal] = useState(false);
+//   const [studentToExtend, setStudentToExtend] = useState(null);
+//   const [extendDays, setExtendDays] = useState(30);
+//   const [extending, setExtending] = useState(false);
+
+//   useEffect(() => {
+//     fetchStudents();
+//   }, [search, branch, placementStatus, currentPage]);
+
+//   const fetchStudents = async () => {
+//     setLoading(true);
+//     try {
+//       //const params = { page: currentPage, limit: 10 };
+//        const params = { page: currentPage - 1, size: 10 };
+//       if (search) params.search = search;
+//       if (branch) params.branch = branch;
+//       if (placementStatus) params.placementStatus = placementStatus;
+//       const res = await adminAPI.getAllStudents(params);
+//       const page = res.data.data; // Spring's Page<T> wrapper
+//       // setStudents(res.data.students);
+//       // setTotalPages(res.data.totalPages);
+//       // setTotalStudents(res.data.totalStudents);
+//       setStudents(page.content); 
+//       setTotalPages(page.totalPages); 
+//       setTotalStudents(page.totalElements); 
+//     } catch (error) {
+//       console.error("Fetch error:", error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//     const handleExtend = async () => {
+//     if (!studentToExtend) return;
+//     setExtending(true);
+//     try {
+//       await adminAPI.extendStudent(studentToExtend.id, Number(extendDays));
+//       toast.success(`Account extended by ${extendDays} days`);
+//       setShowExtendModal(false);
+//       setStudentToExtend(null);
+//       setExtendDays(30);
+//       fetchStudents();
+//     } catch (error) {
+//       console.error("Extend error:", error);
+//       toast.error(error.response?.data?.message || "Failed to extend account");
+//     } finally {
+//       setExtending(false);
+//     }
+//   };
+
+//   const handleSearchChange = (e) => {
+//     setSearch(e.target.value);
+//     setCurrentPage(1);
+//   };
+//   const handleBranchChange = (e) => {
+//     setBranch(e.target.value);
+//     setCurrentPage(1);
+//   };
+//   const handleStatusChange = (e) => {
+//     setPlacementStatus(e.target.value);
+//     setCurrentPage(1);
+//   };
+
+//   // Pagination helper - show limited page numbers
+//   const getPageNumbers = () => {
+//     const pages = [];
+//     const maxVisible = 5;
+//     let start = Math.max(1, currentPage - 2);
+//     let end = Math.min(totalPages, start + maxVisible - 1);
+//     if (end - start < maxVisible - 1) {
+//       start = Math.max(1, end - maxVisible + 1);
+//     }
+//     for (let i = start; i <= end; i++) {
+//       pages.push(i);
+//     }
+//     return pages;
+//   };
+
+//   return (
+//     <div className="h-screen flex flex-col bg-gray-100">
+//       {/* Full width Navbar */}
+//       <div className="flex-shrink-0">
+//         <Navbar />
+//       </div>
+
+//       {/* Sidebar + Content */}
+//       <div className="flex flex-1 overflow-hidden">
+//         {/* Sidebar */}
+//         <div className="w-64 flex-shrink-0 overflow-y-auto bg-white shadow-md">
+//           <Sidebar />
+//         </div>
+
+//         {/* Main Content */}
+//         <main className="flex-1 overflow-y-auto p-8">
+//           <div className="mb-6">
+//             <h1 className="text-2xl font-bold text-gray-900">
+//               Manage Students ðŸ‘¥
+//             </h1>
+//             <p className="text-gray-600">
+//               View, search, and filter all registered students
+//             </p>
+//           </div>
+
+//           {/* Filters Row */}
+//           <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+//             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+//               <div className="md:col-span-2">
+//                 <input
+//                   type="text"
+//                   className="input-field"
+//                   placeholder="ðŸ” Search by name or registration number..."
+//                   value={search}
+//                   onChange={handleSearchChange}
+//                 />
+//               </div>
+//               <div>
+//                 <select
+//                   className="input-field"
+//                   value={branch}
+//                   onChange={handleBranchChange}
+//                 >
+//                   <option value="">All Branches</option>
+//                   <option value="CSE">CSE</option>
+//                   <option value="IT">IT</option>
+//                   <option value="ECE">ECE</option>
+//                   <option value="EEE">EEE</option>
+//                   <option value="Mechanical">Mechanical</option>
+//                   <option value="Civil">Civil</option>
+//                 </select>
+//               </div>
+//               <div>
+//                 <select
+//                   className="input-field"
+//                   value={placementStatus}
+//                   onChange={handleStatusChange}
+//                 >
+//                   <option value="">All Status</option>
+//                   <option value="placed">Placed</option>
+//                   <option value="unplaced">Unplaced</option>
+//                 </select>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Results Count */}
+//           <div className="flex items-center justify-between mb-4">
+//             <p className="text-sm text-gray-500">
+//               Showing <span className="font-semibold">{students.length}</span>{" "}
+//               of <span className="font-semibold">{totalStudents}</span> students
+//             </p>
+//             <p className="text-sm text-gray-500">
+//               Page {currentPage} of {totalPages}
+//             </p>
+//           </div>
+
+//           {/* Students Table */}
+//           <div className="bg-white rounded-lg shadow-md overflow-hidden w-full">
+//             <div className="overflow-x-auto">
+//               <table className="w-full">
+//                 <thead>
+//                   <tr className="bg-gray-50 border-b border-gray-200">
+//                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+//                       #
+//                     </th>
+//                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+//                       Reg No
+//                     </th>
+//                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+//                       Name
+//                     </th>
+//                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+//                       Branch
+//                     </th>
+//                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+//                       CGPA
+//                     </th>
+//                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+//                       Skills
+//                     </th>
+//                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+//                       Status
+//                     </th>
+//                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Account Status</th>
+//                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Expiry</th>
+//                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Action</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody className="divide-y divide-gray-100">
+//                   {loading ? (
+//                     <tr>
+//                       <td colSpan="7" className="text-center py-10">
+//                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+//                       </td>
+//                     </tr>
+//                   ) : students.length === 0 ? (
+//                     <tr>
+//                       <td
+//                         colSpan="7"
+//                         className="text-center py-10 text-gray-400"
+//                       >
+//                         No students found
+//                       </td>
+//                     </tr>
+//                   ) : (
+//                     // students.map((student, index) => (
+//                     //   <tr
+//                     //     key={student._id}
+//                     //     className="hover:bg-gray-50 transition-colors"
+//                     //   >
+//                     //     <td className="px-6 py-4 text-sm text-gray-500">
+//                     //       {(currentPage - 1) * 10 + index + 1}
+//                     //     </td>
+//                     //     <td className="px-6 py-4">
+//                     //       <span className="text-sm font-bold text-primary-600">
+//                     //         {student.registrationNumber}
+//                     //       </span>
+//                     //     </td>
+//                     //     <td className="px-6 py-4">
+//                     //       <div className="flex items-center space-x-3">
+//                     //         <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+//                     //           <span className="text-sm font-bold text-primary-600">
+//                     //             {(student.personalInfo?.firstName || "?")[0]}
+//                     //           </span>
+//                     //         </div>
+//                     //         <div>
+//                     //           <p className="text-sm font-semibold text-gray-900">
+//                     //             {student.personalInfo?.firstName}{" "}
+//                     //             {student.personalInfo?.lastName}
+//                     //           </p>
+//                     //           <p className="text-xs text-gray-400">
+//                     //             {student.userId?.email}
+//                     //           </p>
+//                     //         </div>
+//                     //       </div>
+//                     //     </td>
+//                     //     <td className="px-6 py-4 text-sm text-gray-700">
+//                     //       {student.academicInfo?.branch || "â€”"}
+//                     //     </td>
+//                     //     <td className="px-6 py-4">
+//                     //       <span
+//                     //         className={`text-sm font-bold ${getCGPAColor(student.academicInfo?.cgpa)}`}
+//                     //       >
+//                     //         {student.academicInfo?.cgpa || "â€”"}
+//                     //       </span>
+//                     //     </td>
+//                     //     <td className="px-6 py-4">
+//                     //       <div className="flex flex-wrap gap-1">
+//                     //         {student.skills?.slice(0, 3).map((skill, i) => (
+//                     //           <span
+//                     //             key={i}
+//                     //             className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded"
+//                     //           >
+//                     //             {skill}
+//                     //           </span>
+//                     //         ))}
+//                     //         {student.skills?.length > 3 && (
+//                     //           <span className="text-xs text-gray-400">
+//                     //             +{student.skills.length - 3}
+//                     //           </span>
+//                     //         )}
+//                     //       </div>
+//                     //     </td>
+//                     //     <td className="px-6 py-4">
+//                     //       <span
+//                     //         className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.placementStatus)}`}
+//                     //       >
+//                     //         {student.placementStatus === "placed"
+//                     //           ? "Placed"
+//                     //           : "Unplaced"}
+//                     //       </span>
+//                     //     </td>
+//                     //   </tr>
+//                     // ))
+
+//                       students.map((student, index) => (
+//                       <tr key={student.id} className="hover:bg-gray-50 transition-colors"> {/* was student._id */}
+//                         <td className="px-6 py-4 text-sm text-gray-500">{(currentPage - 1) * 10 + index + 1}</td>
+//                         <td className="px-6 py-4">
+//                           <span className="text-sm font-bold text-primary-600">{student.registrationNumber}</span>
+//                         </td>
+//                         <td className="px-6 py-4">
+//                           <div className="flex items-center space-x-3">
+//                             <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+//                               <span className="text-sm font-bold text-primary-600">{(student.firstName || "?")[0]}</span>
+//                             </div>
+//                             <div>
+//                               <p className="text-sm font-semibold text-gray-900">{student.firstName} {student.lastName}</p>
+//                               <p className="text-xs text-gray-400">{student.email}</p>
+//                             </div>
+//                           </div>
+//                         </td>
+//                         <td className="px-6 py-4 text-sm text-gray-700">{student.branch || "â€”"}</td>
+//                         <td className="px-6 py-4">
+//                           <span className={`text-sm font-bold ${getCGPAColor(student.cgpa)}`}>{student.cgpa || "â€”"}</span>
+//                         </td>
+//                         <td className="px-6 py-4">
+//                           <div className="flex flex-wrap gap-1">
+//                             {student.skills?.slice(0, 3).map((skill, i) => (
+//                               <span key={i} className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">{skill}</span>
+//                             ))}
+//                             {student.skills?.length > 3 && (
+//                               <span className="text-xs text-gray-400">+{student.skills.length - 3}</span>
+//                             )}
+//                           </div>
+//                         </td>
+//                         <td className="px-6 py-4">
+//                           <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.placementStatus)}`}>
+//                             {student.placementStatus?.toLowerCase() === "placed" ? "Placed" : "Unplaced"}
+//                           </span>
+//                         </td>
+//                                                 <td className="px-6 py-4">
+//                           <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadgeColor(student.accountStatus)}`}>
+//                             {student.accountStatus?.replace(/_/g, " ")}
+//                           </span>
+//                         </td>
+//                         <td className="px-6 py-4 text-sm text-gray-500">
+//                           {student.expiryDate ? new Date(student.expiryDate).toLocaleDateString() : "â€”"}
+//                         </td>
+//                         <td className="px-6 py-4">
+//                           <button
+//                             onClick={() => { setStudentToExtend(student); setShowExtendModal(true); }}
+//                             className="text-primary-600 hover:underline text-sm font-medium"
+//                           >
+//                             Extend
+//                           </button>
+//                         </td>
+//                       </tr>
+//                     ))
+//                   )}
+//                   {showExtendModal && studentToExtend && (
+//         <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+//           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+//             <h2 className="text-2xl font-bold text-gray-900 mb-4">Extend Account</h2>
+//             <div className="mb-4 bg-gray-50 p-4 rounded-lg">
+//               <p className="font-bold text-gray-900">{studentToExtend.firstName} {studentToExtend.lastName}</p>
+//               <p className="text-sm text-gray-600">{studentToExtend.registrationNumber}</p>
+//               <p className="text-sm text-gray-500 mt-1">
+//                 Current status: {studentToExtend.accountStatus?.replace(/_/g, " ")}
+//               </p>
+//             </div>
+//             <label className="block text-sm font-semibold text-gray-700 mb-2">Extend by (days)</label>
+//             <input
+//               type="number"
+//               min="1"
+//               value={extendDays}
+//               onChange={(e) => setExtendDays(e.target.value)}
+//               className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 mb-6"
+//             />
+//             <div className="flex space-x-3">
+//               <button
+//                 onClick={() => { setShowExtendModal(false); setStudentToExtend(null); }}
+//                 disabled={extending}
+//                 className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold disabled:opacity-50"
+//               >
+//                 Cancel
+//               </button>
+//               <button
+//                 onClick={handleExtend}
+//                 disabled={extending}
+//                 className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold disabled:opacity-50"
+//               >
+//                 {extending ? "Extending..." : "Extend Account"}
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//                 </tbody>
+//               </table>
+//             </div>
+
+//             {/* Pagination - smart with limited page numbers */}
+//             {totalPages > 1 && (
+//               <div className="flex items-center justify-center gap-1 px-6 py-4 border-t flex-wrap">
+//                 {/* First page */}
+//                 {currentPage > 3 && (
+//                   <>
+//                     <button
+//                       onClick={() => setCurrentPage(1)}
+//                       className="px-3 py-1 border rounded-lg text-sm hover:bg-gray-50"
+//                     >
+//                       1
+//                     </button>
+//                     <span className="text-gray-400 text-sm">...</span>
+//                   </>
+//                 )}
+
+//                 {/* Prev button */}
+//                 <button
+//                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+//                   disabled={currentPage === 1}
+//                   className="px-3 py-1 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50"
+//                 >
+//                   â† Prev
+//                 </button>
+
+//                 {/* Page numbers - only show 5 at a time */}
+//                 {getPageNumbers().map((page) => (
+//                   <button
+//                     key={page}
+//                     onClick={() => setCurrentPage(page)}
+//                     className={`px-3 py-1 rounded-lg text-sm ${
+//                       currentPage === page
+//                         ? "bg-primary-600 text-white"
+//                         : "border hover:bg-gray-50"
+//                     }`}
+//                   >
+//                     {page}
+//                   </button>
+//                 ))}
+
+//                 {/* Next button */}
+//                 <button
+//                   onClick={() =>
+//                     setCurrentPage((p) => Math.min(totalPages, p + 1))
+//                   }
+//                   disabled={currentPage === totalPages}
+//                   className="px-3 py-1 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50"
+//                 >
+//                   Next â†’
+//                 </button>
+
+//                 {/* Last page */}
+//                 {currentPage < totalPages - 2 && (
+//                   <>
+//                     <span className="text-gray-400 text-sm">...</span>
+//                     <button
+//                       onClick={() => setCurrentPage(totalPages)}
+//                       className="px-3 py-1 border rounded-lg text-sm hover:bg-gray-50"
+//                     >
+//                       {totalPages}
+//                     </button>
+//                   </>
+//                 )}
+//               </div>
+//             )}
+                  
+//           </div>
+//         </main>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default ManageStudents;
 
 
 ===== src\pages\admin\PendingAlumni.jsx =====
@@ -10772,7 +11316,10 @@ const RegisterRecruiter = () => {
         password: formData.password,
         companyName: formData.companyName,
         industry: formData.industry,
+        website: formData.website,
+        companySize: formData.companySize,
         location: formData.location,
+          description: formData.description,
         contactName: formData.contactPersonName,
         contactDesignation: formData.contactPersonDesignation,
         contactPhone: formData.contactPersonPhone,
@@ -11692,9 +12239,11 @@ const RecruiterDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchProfile();
   }, []);
 
   const fetchDashboardStats = async () => {
@@ -11711,6 +12260,24 @@ const RecruiterDashboard = () => {
       setLoading(false);
     }
   };
+
+  const fetchProfile = async () => {
+  try {
+    const response = await api.get("/recruiter/profile");
+    setProfile(response.data.data);
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+  }
+};
+
+const getStatusBadgeColor = (status) => {
+  switch (status?.toLowerCase()) {
+    case "approved": return "bg-green-100 text-green-700";
+    case "pending": return "bg-yellow-100 text-yellow-700";
+    case "rejected": return "bg-red-100 text-red-700";
+    default: return "bg-gray-100 text-gray-700";
+  }
+};
 
   if (loading) {
     return (
@@ -11740,14 +12307,61 @@ const RecruiterDashboard = () => {
         <Sidebar />
         <div className="flex-1 p-6 lg:p-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Recruiter Dashboard
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Manage your job postings and track applications
-            </p>
-          </div>
+<div className="mb-8">
+  <div className="flex items-center justify-between">
+    <div>
+      <h1 className="text-3xl font-bold text-gray-900">Recruiter Dashboard</h1>
+      <p className="text-gray-600 mt-1">Manage your job postings and track applications</p>
+    </div>
+    <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusBadgeColor(profile?.verificationStatus)}`}>
+      {profile?.verificationStatus?.toLowerCase() === "approved"
+        ? "Verified"
+        : profile?.verificationStatus?.charAt(0).toUpperCase() + profile?.verificationStatus?.slice(1).toLowerCase()}
+    </span>
+  </div>
+</div>
+
+{/* Verification Banners */}
+{profile?.verificationStatus?.toLowerCase() === "pending" && (
+  <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center space-x-3">
+    <span className="text-2xl">â³</span>
+    <div>
+      <p className="text-yellow-800 font-semibold">Verification Pending</p>
+      <p className="text-yellow-700 text-sm">
+        Your company account is awaiting admin approval. You can update your
+        company profile while you wait, but you won't be able to post jobs
+        until approved.
+      </p>
+    </div>
+  </div>
+)}
+
+{profile?.verificationStatus?.toLowerCase() === "rejected" && (
+  <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
+    <span className="text-2xl">âŒ</span>
+    <div>
+      <p className="text-red-800 font-semibold">Verification Rejected</p>
+      <p className="text-red-700 text-sm">
+        Please contact the placement cell for more information.
+        {profile?.rejectionReason && ` Reason: ${profile.rejectionReason}`}
+      </p>
+    </div>
+  </div>
+)}
+
+{profile?.verificationStatus?.toLowerCase() === "approved" && (
+  <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
+    <span className="text-2xl">âœ…</span>
+    <div>
+      <p className="text-green-800 font-semibold">Account Verified</p>
+      <p className="text-green-700 text-sm">
+        Your company is verified! You can now post jobs and start receiving
+        applications from students.
+      </p>
+    </div>
+  </div>
+)}
+
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -18577,7 +19191,7 @@ const MyPlacements = () => {
                         <div>
                           <p className="text-sm text-gray-600 mb-1">Package</p>
                           <p className="text-2xl font-bold text-gray-900">
-                           // â‚¹{placement.package} LPA
+                           
                             â‚¹{placement.packageOffered} LPA
                           </p>
                         </div>
@@ -18658,9 +19272,11 @@ export default MyPlacements;
 import { useState } from "react";
 import { studentAPI } from "../../services/api";
 import toast from "react-hot-toast";
+import ExtensionRequestModal from "../../components/common/ExtensionRequestModal";
 
-const PlacedStudentGuidance = ({ daysLeft, student }) => {
+const PlacedStudentGuidance = ({ student }) => {
   const [isExporting, setIsExporting] = useState(false);
+  const [showExtensionModal, setShowExtensionModal] = useState(false);
   const placements =
     student.placements?.length > 0
       ? student.placements
@@ -18680,7 +19296,9 @@ const PlacedStudentGuidance = ({ daysLeft, student }) => {
   const sortedPlacements = [...placements].sort((a, b) => {
     if (a.isPrimary) return -1;
     if (b.isPrimary) return 1;
-    return (b.package || 0) - (a.package || 0);
+        return (
+      (b.packageOffered || b.package || 0) - (a.packageOffered || a.package || 0)
+    );
   });
   const handleExportData = async () => {
     setIsExporting(true);
@@ -18932,13 +19550,20 @@ const PlacedStudentGuidance = ({ daysLeft, student }) => {
               />
             </svg>
           </div>
-          <div>
+                    <div>
             <p className="font-semibold text-blue-900 text-lg">
-              Account expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+              Your account has expired
             </p>
             <p className="text-sm text-blue-700 mt-1">
-              Download your placement journey data before your account closes
+              Congratulations on your placement! Need more time on the
+              platform? Request an extension.
             </p>
+            <button
+              onClick={() => setShowExtensionModal(true)}
+              className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold text-sm"
+            >
+              Request Extension
+            </button>
           </div>
         </div>
       </div>
@@ -19163,6 +19788,10 @@ const PlacedStudentGuidance = ({ daysLeft, student }) => {
         </p>
       </div>
 
+            {showExtensionModal && (
+        <ExtensionRequestModal onClose={() => setShowExtensionModal(false)} />
+      )}
+
       <style jsx>{`
         @keyframes bounce-slow {
           0%,
@@ -19244,7 +19873,7 @@ const StudentDashboard = () => {
       setDashboardMode(data.dashboardMode);
 
       // Only fetch stats if in normal mode
-      if (dashboardResponse.data.dashboardMode === "normal") {
+      if (data.dashboardMode === "normal") {
         const statsResponse = await api.get("/analytics/student/dashboard");
         if (statsResponse.data.success) {
           //setStats(statsResponse.data.stats);
@@ -19573,17 +20202,14 @@ const StudentDashboard = () => {
                       </div>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          app.status === "selected"
-                            ? "bg-purple-100 text-purple-700"
-                            : app.status === "shortlisted"
-                              ? "bg-green-100 text-green-700"
-                              : app.status === "rejected"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-blue-100 text-blue-700"
+                          app.status?.toLowerCase() === "selected" ? "bg-purple-100 text-purple-700"
+  : app.status?.toLowerCase() === "shortlisted" ? "bg-green-100 text-green-700"
+  : app.status?.toLowerCase() === "rejected" ? "bg-red-100 text-red-700"
+  : "bg-blue-100 text-blue-700"
                         }`}
                       >
                         {app.status.charAt(0).toUpperCase() +
-                          app.status.slice(1)}
+                          app.status.slice(1).toLowerCase()}
                       </span>
                     </div>
                   ))}
@@ -21681,38 +22307,14 @@ export default StudentProfile;
 
 ===== src\pages\student\UnplacedStudentGuidance.jsx =====
 import { useState } from "react";
-import { studentAPI } from "../../services/api";
-import toast from "react-hot-toast";
 import CareerPathGuideModal from "./CareerPathGuideModal";
+import ExtensionRequestModal from "../../components/common/ExtensionRequestModal";
 
-const UnplacedStudentGuidance = ({ daysLeft }) => {
+const UnplacedStudentGuidance = () => {
   const [showModal, setShowModal] = useState(false);
-  const [reason, setReason] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const [showExtensionModal, setShowExtensionModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [selectedPath, setSelectedPath] = useState(null);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!reason.trim()) {
-      toast.error("Please provide a reason");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await studentAPI.requestExtension(reason);
-      toast.success("Extension request submitted!");
-      setShowModal(false);
-      setReason("");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to submit");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const careerPaths = [
     {
@@ -21795,12 +22397,13 @@ const UnplacedStudentGuidance = ({ daysLeft }) => {
                 />
               </svg>
             </div>
-            <div>
+                        <div>
               <p className="font-bold text-orange-900 text-lg">
-                Account expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+                Your account has expired
               </p>
               <p className="text-sm text-orange-700 mt-1">
-                Download your data and explore career options below
+                Explore your career options below, or request an extension if
+                you need more time on the platform
               </p>
             </div>
           </div>
@@ -21888,7 +22491,7 @@ const UnplacedStudentGuidance = ({ daysLeft }) => {
       <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
           <span className="text-2xl mr-2">ðŸ“¥</span>
-          Before Your Account Expires
+          Your Data
         </h3>
         <div className="grid md:grid-cols-2 gap-4">
           <button className="flex items-center space-x-3 px-5 py-4 bg-white hover:bg-blue-50 rounded-xl transition border border-gray-200 hover:border-blue-300 group">
@@ -21936,68 +22539,7 @@ const UnplacedStudentGuidance = ({ daysLeft }) => {
       </div>
 
       {/* Extension Modal - Enhanced */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform animate-slideUp">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-blue-100 p-3 rounded-xl">
-                <svg
-                  className="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">
-                Request Account Extension
-              </h3>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  Reason for Extension
-                </label>
-                <textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                  rows="4"
-                  placeholder="E.g., Preparing for GATE exam, Enrolled in certification course, Actively applying off-campus..."
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Be specific about why you need more time
-                </p>
-              </div>
-
-              <div className="flex space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-5 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition font-semibold text-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                >
-                  {loading ? "Submitting..." : "Submit Request"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            {showModal && <ExtensionRequestModal onClose={() => setShowModal(false)} />}
       {/* âœ… Career Path Guide Modal */}
       {showGuideModal && (
         <CareerPathGuideModal
@@ -22752,7 +23294,7 @@ export const adminAPI = {
   adminUpdateApplicationStatus: (applicationId, data) =>
     api.put(`/admin/applications/${applicationId}/status`, data),
    exportJobApplications: (jobId, status) =>
-    api.get(`/jobs/${jobId}/export`, { params: { status }, responseType: "blob" }),
+    api.get(`/admin/jobs/${jobId}/export`, { params: { status }, responseType: "blob" }),
   bulkUpdateApplications: (data) => api.patch("/admin/applications/bulk-update", data),
 
   createAdmin: (data) => api.post("/admin/create", data), // path differs from original /admin/admins
@@ -22766,6 +23308,7 @@ export const adminAPI = {
     return api.post(`/admin/referrals/${id}/${endpoint}`);
   },
     extendStudent: (id, days) => api.post(`/admin/students/${id}/extend`, { days }),
+      getStudentAcademicYears: (params) => api.get("/admin/students/academic-years", { params }),
 };
 
 // ============ ALUMNI ============
@@ -23300,8 +23843,8 @@ class SocketClient {
 
     if (this.shownNotifications.has(notificationId)) return;
 
-    const notificationAge = Date.now() - new Date(notification.createdAt).getTime();
-    if (notificationAge >= 10000) return;
+    // const notificationAge = Date.now() - new Date(notification.createdAt).getTime();
+    // if (notificationAge >= 10000) return;
 
     this.shownNotifications.add(notificationId);
 
@@ -23587,7 +24130,6 @@ export const getStatusBadgeColor = (status) => {
     placed: "bg-green-100 text-green-800",
     unplaced: "bg-yellow-100 text-yellow-800",
      expired: "bg-red-100 text-red-800",
-    deleted: "bg-gray-200 text-gray-500",
     career_guidance_mode: "bg-blue-100 text-blue-800",
   };
   //return colors[status] || "bg-gray-100 text-gray-800";
@@ -24286,6 +24828,22 @@ export default defineConfig([
 ])
 
 
+===== index.html =====
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
+
 ===== package.json =====
 {
   "name": "frontend",
@@ -24334,6 +24892,719 @@ export default {
     autoprefixer: {},
   },
 }
+
+
+===== README.md =====
+# React + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+# CareerLink Frontend
+
+> An AI-powered campus placement management portal built with React.js
+
+[![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.0-646CFF.svg)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.3-38B2AC.svg)](https://tailwindcss.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+## ðŸ“‹ Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [Running the Application](#running-the-application)
+- [Project Structure](#project-structure)
+- [Key Components](#key-components)
+- [API Integration](#api-integration)
+- [State Management](#state-management)
+- [Routing](#routing)
+- [Styling](#styling)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+
+## ðŸŒŸ Overview
+
+CareerLink Frontend is a modern, responsive Single Page Application (SPA) that provides an intuitive interface for managing campus placements. It serves four distinct user roles: **Students**, **Recruiters**, **Administrators**, and **Alumni**, each with tailored dashboards and functionalities.
+
+**Live Demo:** [https://career-link-frontend-henna.vercel.app](https://career-link-frontend-henna.vercel.app)
+
+## âœ¨ Features
+
+### ðŸŽ“ Student Portal
+
+- **Profile Management**: Complete profile with resume upload, skills, CGPA, branch
+- **Job Discovery**: Browse approved job postings with advanced filters
+- **One-Click Apply**: Instant application with automatic eligibility verification
+- **ATS Score Viewing**: See compatibility scores for each application
+- **Application Tracking**: Real-time status updates (Applied, Shortlisted, Selected, Rejected)
+- **Real-Time Notifications**: Instant alerts for new jobs and status changes
+- **Alumni Feed**: Access interview experiences and career guidance
+
+### ðŸ’¼ Recruiter Dashboard
+
+- **Job Management**: Create, edit, and manage job postings
+- **Application Review**: View applications with ATS compatibility scores
+- **Auto-Shortlist**: Automatically select top 30% candidates based on ATS threshold
+- **Bulk Operations**: Process 200+ applications simultaneously
+- **Status Updates**: Update application status across recruitment stages
+- **Analytics Dashboard**: View recruitment statistics and trends
+- **Post Updates**: Share placement process updates with students
+
+### ðŸ‘¨â€ðŸ’¼ Admin Console
+
+- **User Management**: Approve recruiters and alumni, manage student accounts
+- **Job Approval**: Review and approve job postings before publication
+- **Comprehensive Analytics**: Branch-wise, company-wise placement statistics
+- **Report Generation**: Export detailed reports with custom filters
+- **Announcement System**: Post platform-wide announcements
+- **Application Oversight**: Monitor and manage all application workflows
+
+### ðŸŽ“ Alumni Network
+
+- **Referral Posting**: Share job opportunities from their organizations
+- **Experience Sharing**: Post interview tips and career guidance
+- **Community Engagement**: Contribute to student feed with insights
+
+### ðŸ”” Real-Time Features
+
+- **WebSocket Notifications**: Instant updates via Socket.IO (<3 seconds delivery)
+- **Browser Notifications**: Desktop notifications for important events
+- **Sound Alerts**: Audio notifications for new updates
+- **Unread Count Badge**: Visual indicator for pending notifications
+
+## ðŸ›  Tech Stack
+
+| Technology           | Purpose                 | Version |
+| -------------------- | ----------------------- | ------- |
+| **React**            | UI Library              | 18.2.0  |
+| **Vite**             | Build Tool & Dev Server | 5.0+    |
+| **React Router**     | Client-side Routing     | 6.x     |
+| **Axios**            | HTTP Client             | 1.6+    |
+| **Socket.IO Client** | Real-time Communication | 4.5+    |
+| **Tailwind CSS**     | Utility-first Styling   | 3.3+    |
+| **React Hot Toast**  | Toast Notifications     | 2.4+    |
+| **date-fns**         | Date Formatting         | 2.30+   |
+| **Recharts**         | Data Visualization      | 2.8+    |
+| **Lucide React**     | Icon Library            | Latest  |
+
+## ðŸ“¦ Prerequisites
+
+Before running this project, ensure you have:
+
+- **Node.js**: v18.0.0 or higher ([Download](https://nodejs.org/))
+- **npm**: v9.0.0 or higher (comes with Node.js)
+- **Git**: For version control ([Download](https://git-scm.com/))
+- **Backend Server**: CareerLink backend running ([Backend Repo](https://github.com/yourusername/careerlink-backend))
+
+## ðŸš€ Installation
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/ACS558/careerlink-frontend.git
+cd careerlink-frontend
+```
+
+### Step 2: Install Dependencies
+
+```bash
+npm install
+```
+
+This will install all required packages listed in `package.json`.
+
+### Step 3: Configure Environment Variables
+
+Create a `.env` file in the root directory:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` with your configuration (see [Environment Variables](#environment-variables)).
+
+## ðŸ” Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# Backend API Configuration
+VITE_API_URL=https://careerlink-backend-itv6.onrender.com/api
+# For local development: http://localhost:5000/api
+
+# Socket.IO Configuration
+VITE_SOCKET_URL=https://careerlink-backend-itv6.onrender.com
+# For local development: http://localhost:5000
+
+# Application Configuration
+VITE_APP_NAME=CareerLink
+VITE_APP_VERSION=1.0.0
+```
+
+### Environment Variables Explanation
+
+| Variable           | Description              | Example                          |
+| ------------------ | ------------------------ | -------------------------------- |
+| `VITE_API_URL`     | Backend API base URL     | `https://api.careerlink.com/api` |
+| `VITE_SOCKET_URL`  | Socket.IO server URL     | `https://api.careerlink.com`     |
+| `VITE_APP_NAME`    | Application display name | `CareerLink`                     |
+| `VITE_APP_VERSION` | Current version          | `1.0.0`                          |
+
+**âš ï¸ Important Notes:**
+
+- All Vite environment variables must be prefixed with `VITE_`
+- Never commit `.env` file to version control
+- Use `.env.example` as a template for other developers
+
+## ðŸƒ Running the Application
+
+### Development Mode
+
+Start the development server with hot-reload:
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`
+
+**Features in Development Mode:**
+
+- Hot Module Replacement (HMR)
+- Source maps for debugging
+- React DevTools support
+- Detailed error messages
+
+### Production Build
+
+Create an optimized production build:
+
+```bash
+npm run build
+```
+
+This generates optimized files in the `dist/` directory.
+
+### Preview Production Build
+
+Preview the production build locally:
+
+```bash
+npm run preview
+```
+
+### Linting
+
+Run ESLint to check code quality:
+
+```bash
+npm run lint
+```
+
+Fix auto-fixable linting errors:
+
+```bash
+npm run lint:fix
+```
+
+## ðŸ“ Project Structure
+
+```
+careerlink-frontend/
+â”œâ”€â”€ public/                    # Static assets
+â”‚   â”œâ”€â”€ logo.png              # Application logo
+â”‚   â”œâ”€â”€ sounds/               # Notification sounds
+â”‚   â”‚   â””â”€â”€ notification.mp3
+â”‚   â””â”€â”€ vite.svg
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ assets/               # Images, fonts, etc.
+â”‚   â”œâ”€â”€ components/           # React components
+â”‚   â”‚   â”œâ”€â”€ common/          # Shared components
+â”‚   â”‚   â”‚   â”œâ”€â”€ Navbar.jsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ Sidebar.jsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ Footer.jsx
+â”‚   â”‚   â”‚   â””â”€â”€ LoadingSpinner.jsx
+â”‚   â”‚   â”œâ”€â”€ student/         # Student-specific components
+â”‚   â”‚   â”œâ”€â”€ recruiter/       # Recruiter-specific components
+â”‚   â”‚   â”œâ”€â”€ admin/           # Admin-specific components
+â”‚   â”‚   â””â”€â”€ alumni/          # Alumni-specific components
+â”‚   â”œâ”€â”€ context/             # React Context for state management
+â”‚   â”‚   â”œâ”€â”€ AuthContext.jsx
+â”‚   â”‚   â””â”€â”€ NotificationContext.jsx
+â”‚   â”œâ”€â”€ hooks/               # Custom React hooks
+â”‚   â”‚   â”œâ”€â”€ useAuth.js
+â”‚   â”‚   â”œâ”€â”€ useNotifications.js
+â”‚   â”‚   â””â”€â”€ useWebSocket.js
+â”‚   â”œâ”€â”€ pages/               # Page components (route handlers)
+â”‚   â”‚   â”œâ”€â”€ auth/
+â”‚   â”‚   â”‚   â”œâ”€â”€ Login.jsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ RegisterStudent.jsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ RegisterRecruiter.jsx
+â”‚   â”‚   â”‚   â””â”€â”€ RegisterAlumni.jsx
+â”‚   â”‚   â”œâ”€â”€ student/
+â”‚   â”‚   â”‚   â”œâ”€â”€ Dashboard.jsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ BrowseJobs.jsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ MyApplications.jsx
+â”‚   â”‚   â”‚   â””â”€â”€ Profile.jsx
+â”‚   â”‚   â”œâ”€â”€ recruiter/
+â”‚   â”‚   â”‚   â”œâ”€â”€ RecruiterDashboard.jsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ PostJob.jsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ ManageJobs.jsx
+â”‚   â”‚   â”‚   â””â”€â”€ ViewApplications.jsx
+â”‚   â”‚   â”œâ”€â”€ admin/
+â”‚   â”‚   â”‚   â”œâ”€â”€ AdminDashboard.jsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ ManageStudents.jsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ ApproveRecruiters.jsx
+â”‚   â”‚   â”‚   â””â”€â”€ Analytics.jsx
+â”‚   â”‚   â””â”€â”€ alumni/
+â”‚   â”‚       â”œâ”€â”€ AlumniDashboard.jsx
+â”‚   â”‚       â”œâ”€â”€ PostReferral.jsx
+â”‚   â”‚       â””â”€â”€ ShareExperience.jsx
+â”‚   â”œâ”€â”€ services/            # API service layer
+â”‚   â”‚   â”œâ”€â”€ api.js          # Axios instance & interceptors
+â”‚   â”‚   â”œâ”€â”€ authService.js
+â”‚   â”‚   â”œâ”€â”€ jobService.js
+â”‚   â”‚   â”œâ”€â”€ applicationService.js
+â”‚   â”‚   â””â”€â”€ notificationService.js
+â”‚   â”œâ”€â”€ socket/              # Socket.IO configuration
+â”‚   â”‚   â””â”€â”€ socketClient.js
+â”‚   â”œâ”€â”€ utils/               # Utility functions
+â”‚   â”‚   â”œâ”€â”€ validators.js
+â”‚   â”‚   â”œâ”€â”€ formatters.js
+â”‚   â”‚   â””â”€â”€ constants.js
+â”‚   â”œâ”€â”€ App.jsx              # Root component
+â”‚   â”œâ”€â”€ main.jsx             # Application entry point
+â”‚   â””â”€â”€ index.css            # Global styles (Tailwind)
+â”œâ”€â”€ .env                      # Environment variables (not in git)
+â”œâ”€â”€ .env.example             # Environment template
+â”œâ”€â”€ .gitignore               # Git ignore rules
+â”œâ”€â”€ index.html               # HTML entry point
+â”œâ”€â”€ package.json             # Dependencies & scripts
+â”œâ”€â”€ postcss.config.js        # PostCSS configuration
+â”œâ”€â”€ tailwind.config.js       # Tailwind CSS configuration
+â”œâ”€â”€ vercel.json              # Vercel deployment config
+â”œâ”€â”€ vite.config.js           # Vite configuration
+â””â”€â”€ README.md                # This file
+```
+
+## ðŸ§© Key Components
+
+### Authentication Flow
+
+```jsx
+// src/context/AuthContext.jsx
+// Manages user authentication state across the application
+// Provides login, logout, and user role management
+```
+
+### Real-Time Notifications
+
+```jsx
+// src/hooks/useNotifications.js
+// Custom hook for managing notifications
+// Features:
+// - WebSocket connection via Socket.IO
+// - Browser notification API integration
+// - Sound alerts
+// - Unread count tracking
+```
+
+### Protected Routes
+
+```jsx
+// src/components/common/ProtectedRoute.jsx
+// Ensures only authenticated users with correct roles can access routes
+```
+
+### API Service Layer
+
+```jsx
+// src/services/api.js
+// Centralized Axios configuration with:
+// - Request/response interceptors
+// - Automatic token attachment
+// - Error handling
+// - Base URL configuration
+```
+
+## ðŸ”— API Integration
+
+### Axios Configuration
+
+```javascript
+// Base configuration
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Request interceptor for JWT token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  },
+);
+```
+
+### Example API Calls
+
+```javascript
+// Authentication
+await api.post("/auth/login", { email, password });
+await api.post("/auth/register/student", userData);
+
+// Jobs
+await api.get("/jobs");
+await api.post("/jobs", jobData);
+
+// Applications
+await api.post("/applications", { jobId });
+await api.patch("/applications/bulk-update", { applicationIds, status });
+
+// Notifications
+await api.get("/notifications");
+await api.put("/notifications/read-all");
+```
+
+## ðŸ”„ State Management
+
+CareerLink uses **React Context API** for global state management:
+
+### Auth Context
+
+```jsx
+const { user, login, logout, isAuthenticated } = useAuth();
+```
+
+**Features:**
+
+- User authentication state
+- Login/logout functionality
+- Role-based access control
+- Token management
+
+### Notification Context
+
+```jsx
+const { notifications, unreadCount, markAsRead, markAllAsRead } =
+  useNotifications();
+```
+
+**Features:**
+
+- Real-time notification updates via Socket.IO
+- Unread count tracking
+- Mark as read functionality
+- Browser notification integration
+
+## ðŸ—º Routing
+
+React Router v6 is used for client-side routing with role-based access:
+
+```jsx
+// Public Routes
+/login
+/register/student
+/register/recruiter
+/register/alumni
+
+// Student Routes (Protected)
+/student/dashboard
+/student/jobs
+/student/applications
+/student/profile
+
+// Recruiter Routes (Protected)
+/recruiter/dashboard
+/recruiter/post-job
+/recruiter/jobs
+/recruiter/applications
+
+// Admin Routes (Protected)
+/admin/dashboard
+/admin/students
+/admin/recruiters
+/admin/jobs
+/admin/analytics
+
+// Alumni Routes (Protected)
+/alumni/dashboard
+/alumni/referrals
+/alumni/feed
+```
+
+## ðŸŽ¨ Styling
+
+### Tailwind CSS
+
+CareerLink uses **Tailwind CSS** for styling with custom configuration:
+
+```javascript
+// tailwind.config.js
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: "#f0f9ff",
+          100: "#e0f2fe",
+          // ... custom color palette
+          600: "#0284c7",
+          700: "#0369a1",
+        },
+      },
+    },
+  },
+};
+```
+
+### Responsive Design
+
+All components are fully responsive with Tailwind breakpoints:
+
+- `sm:` - Small devices (640px+)
+- `md:` - Medium devices (768px+)
+- `lg:` - Large devices (1024px+)
+- `xl:` - Extra large devices (1280px+)
+
+## ðŸš€ Deployment
+
+### Vercel Deployment (Recommended)
+
+1. **Push to GitHub:**
+
+   ```bash
+   git push origin main
+   ```
+
+2. **Import to Vercel:**
+   - Go to [vercel.com](https://vercel.com)
+   - Click "Import Project"
+   - Select your repository
+   - Configure build settings (auto-detected)
+
+3. **Environment Variables:**
+   - Add all environment variables in Vercel dashboard
+   - Settings â†’ Environment Variables
+
+4. **Deploy:**
+   - Vercel auto-deploys on every push to main branch
+
+### Manual Build & Deploy
+
+```bash
+# Build for production
+npm run build
+
+# Deploy dist/ folder to your hosting service
+```
+
+### Important: Vercel SPA Configuration
+
+The `vercel.json` file ensures proper routing for SPA:
+
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+This prevents 404 errors on page refresh.
+
+## ðŸ› Troubleshooting
+
+### Common Issues
+
+#### 1. "Cannot connect to backend"
+
+**Problem:** Frontend can't reach the backend API
+
+**Solutions:**
+
+```bash
+# Check if backend is running
+curl https://careerlink-backend-itv6.onrender.com/api/health
+
+# Verify VITE_API_URL in .env
+# Make sure there's no trailing slash
+VITE_API_URL=http://localhost:5000/api  # Correct
+VITE_API_URL=http://localhost:5000/api/ # Wrong
+```
+
+#### 2. "WebSocket connection failed"
+
+**Problem:** Real-time notifications not working
+
+**Solutions:**
+
+```bash
+# Check VITE_SOCKET_URL (no /api path)
+VITE_SOCKET_URL=http://localhost:5000  # Correct
+
+# Check browser console for Socket.IO errors
+# Ensure backend Socket.IO is running on same port
+```
+
+#### 3. "Page not found on refresh"
+
+**Problem:** 404 error when refreshing page on Vercel
+
+**Solution:**
+
+```bash
+# Ensure vercel.json exists with rewrites
+# See deployment section above
+```
+
+#### 4. "Module not found" errors
+
+**Solution:**
+
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Clear Vite cache
+rm -rf node_modules/.vite
+npm run dev
+```
+
+#### 5. "Build fails on Vercel"
+
+**Solution:**
+
+```bash
+# Check Node.js version in Vercel settings
+# Should be 18.x or higher
+
+# Ensure all environment variables are set in Vercel dashboard
+
+# Check build logs for specific errors
+```
+
+## ðŸ“ Contributing
+
+We welcome contributions! Please follow these guidelines:
+
+### Development Workflow
+
+1. **Fork the repository**
+2. **Create a feature branch:**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. **Make your changes**
+4. **Commit with meaningful messages:**
+   ```bash
+   git commit -m "feat: add job filtering by location"
+   ```
+5. **Push to your fork:**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+6. **Create a Pull Request**
+
+### Code Style
+
+- Follow existing code patterns
+- Use meaningful variable/function names
+- Add comments for complex logic
+- Run linter before committing:
+  ```bash
+  npm run lint
+  ```
+
+### Commit Message Format
+
+```
+type(scope): subject
+
+body
+
+footer
+```
+
+**Types:**
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting)
+- `refactor`: Code refactoring
+- `test`: Adding tests
+- `chore`: Maintenance tasks
+
+## ðŸ“„ License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## ðŸ‘¥ Authors
+
+**CareerLink Development Team**
+
+- Sk. Mohammad Ali - (https://github.com/ACS558)
+- M. Hema Bhuvaneswari
+- V. Sravani
+- S. Naga Goutham
+
+**Guided by:**
+
+- K. Arun Babu, M.Tech - Assistant Professor, CSE
+
+## ðŸ™ Acknowledgments
+
+- Department of Computer Science and Engineering, Bapatla Engineering College
+- All faculty members and staff who supported this project
+- The open-source community for the amazing tools and libraries
+
+## ðŸ“ž Support
+
+For support, email: support@careerlink.com or create an issue in the repository.
+
+---
+
+**Made with â¤ï¸ by CareerLink Team**
 
 
 ===== tailwind.config.js =====
